@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US States Geography Game</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #eef2f7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ───── HOME SCREEN ───── */
+    #screen-home {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .home-hero { text-align: center; }
+    .home-hero h1 { font-size: 2.8rem; font-weight: 800; color: #1a365d; letter-spacing: -0.5px; }
+    .home-hero p  { margin-top: 0.5rem; font-size: 1.1rem; color: #5a6a7e; }
+
+    .mode-cards { display: flex; gap: 1.75rem; flex-wrap: wrap; justify-content: center; }
+    .mode-card {
+      background: white; border-radius: 18px;
+      padding: 2rem 2rem 1.75rem; width: 270px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      cursor: pointer; border: 3px solid transparent;
+      transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+      text-align: left;
+    }
+    .mode-card:hover { border-color: #4299e1; transform: translateY(-5px); box-shadow: 0 10px 32px rgba(66,153,225,0.22); }
+    .mode-card .card-icon { font-size: 2.8rem; margin-bottom: 0.85rem; display: block; }
+    .mode-card h2 { font-size: 1.15rem; color: #2d3748; margin-bottom: 0.5rem; }
+    .mode-card p  { font-size: 0.88rem; color: #718096; line-height: 1.55; }
+
+    /* ───── GAME SCREEN ───── */
+    #screen-game {
+      display: none; flex-direction: column;
+      align-items: center; width: 100%;
+      max-width: 980px; padding: 1rem 1rem 2rem; gap: 0.75rem;
+    }
+
+    /* Header */
+    .game-header {
+      display: flex; align-items: center; width: 100%;
+      padding: 0.65rem 1rem; background: white;
+      border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); gap: 0.75rem;
+    }
+    .hdr-btn {
+      background: none; border: none; cursor: pointer;
+      color: #a0aec0; padding: 0.3rem 0.5rem; border-radius: 8px;
+      transition: color 0.15s, background 0.15s; flex-shrink: 0;
+      display: flex; align-items: center; gap: 0.3rem;
+      font-weight: 600; font-size: 0.85rem;
+    }
+    .hdr-btn:hover { color: #2d3748; background: #f0f4f8; }
+    .hdr-divider { width: 1px; height: 1.4rem; background: #e2e8f0; flex-shrink: 0; }
+    .header-score { font-size: 0.95rem; font-weight: 700; color: #2d3748; white-space: nowrap; min-width: 80px; }
+    .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .progress-bar  { height: 100%; background: linear-gradient(90deg, #4299e1, #667eea); border-radius: 4px; transition: width 0.35s ease; width: 0%; }
+    .progress-text { font-size: 0.82rem; color: #a0aec0; white-space: nowrap; min-width: 44px; text-align: right; }
+
+    /* Streak indicator in header */
+    #streak-display {
+      display: none;
+      align-items: center; gap: 0.3rem;
+      font-size: 0.85rem; font-weight: 700;
+      color: #dd6b20; background: #fff3e0;
+      padding: 0.25rem 0.6rem; border-radius: 20px;
+      flex-shrink: 0; white-space: nowrap;
+      border: 1.5px solid #fbd38d;
+    }
+    #streak-display.show { display: flex; }
+
+    /* Prompt */
+    .prompt-area { text-align: center; }
+    #game-prompt     { font-size: 1.75rem; font-weight: 800; color: #1a365d; min-height: 2.4rem; }
+    #game-instruction{ font-size: 0.92rem; color: #718096; margin-top: 0.2rem; }
+
+    /* Map */
+    #map-container {
+      width: 100%; background: white; border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09); overflow: hidden; position: relative;
+    }
+    #map-container svg { width: 100%; height: auto; display: block; }
+
+    .state-path { fill: #c8d6e5; stroke: white; stroke-width: 1.5px; cursor: default; transition: fill 0.15s; }
+    #map-container.mode1 .state-path         { cursor: pointer; }
+    #map-container.mode1 .state-path:hover   { fill: #90aece; }
+    .state-path.target   { fill: #f6ad55; cursor: default !important; }
+    .state-path.correct  { fill: #48bb78; }
+    .state-path.incorrect{ fill: #fc8181; }
+    .state-path.revealed { fill: #4299e1; }
+
+    /* Loading */
+    #map-loading {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; background: white; border-radius: 16px;
+      font-size: 1rem; color: #718096; gap: 0.6rem;
+    }
+    .spinner {
+      width: 22px; height: 22px; border: 3px solid #e2e8f0;
+      border-top-color: #4299e1; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Mode 2 input */
+    #mode2-area { display: none; align-items: flex-start; gap: 0.75rem; position: relative; }
+    #autocomplete-wrap { position: relative; width: 260px; }
+    #state-input {
+      width: 100%; padding: 0.7rem 1.1rem; font-size: 1.05rem;
+      border: 2px solid #e2e8f0; border-radius: 10px; outline: none;
+      transition: border-color 0.18s;
+    }
+    #state-input:focus       { border-color: #4299e1; }
+    #state-input.open        { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-color: #4299e1; }
+    #autocomplete-list {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: white; border: 2px solid #4299e1; border-top: none;
+      border-radius: 0 0 10px 10px; max-height: 210px; overflow-y: auto;
+      z-index: 200; box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    #autocomplete-list.open { display: block; }
+    .ac-item { padding: 0.55rem 1.1rem; cursor: pointer; font-size: 1rem; color: #2d3748; transition: background 0.1s; }
+    .ac-item:hover, .ac-item.ac-active { background: #ebf8ff; color: #2b6cb0; }
+    .ac-item:last-child { border-radius: 0 0 8px 8px; }
+
+    .submit-btn {
+      padding: 0.7rem 1.4rem; font-size: 0.98rem; font-weight: 700;
+      background: #4299e1; color: white; border: none; border-radius: 10px;
+      cursor: pointer; transition: background 0.18s; flex-shrink: 0;
+    }
+    .submit-btn:hover { background: #3182ce; }
+
+    /* Feedback banner */
+    #feedback {
+      padding: 0.65rem 1.6rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.98rem; min-height: 2.4rem;
+      display: flex; align-items: center; justify-content: center;
+      visibility: hidden;
+    }
+    #feedback.show        { visibility: visible; }
+    #feedback.fb-correct  { background: #c6f6d5; color: #22543d; }
+    #feedback.fb-incorrect{ background: #fed7d7; color: #822727; }
+
+    /* ───── STREAK TOAST ───── */
+    #streak-toast {
+      position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
+      z-index: 1000;
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      font-weight: 700; font-size: 1.05rem;
+      white-space: nowrap;
+      transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    #streak-toast.toast-in  { top: 18px; }
+    #streak-toast .toast-emoji { font-size: 1.6rem; }
+    #streak-toast .toast-text  { display: flex; flex-direction: column; line-height: 1.3; }
+    #streak-toast .toast-title { font-size: 1.05rem; }
+    #streak-toast .toast-sub   { font-size: 0.8rem; font-weight: 500; opacity: 0.85; }
+
+    /* Toast colour themes */
+    #streak-toast.tier-3  { background: #fff3cd; color: #7d5a00; border: 2px solid #f6c343; }
+    #streak-toast.tier-5  { background: #e8f4ff; color: #1a4f82; border: 2px solid #63b3ed; }
+    #streak-toast.tier-10 { background: #ffe8f7; color: #7b2563; border: 2px solid #d53f8c; }
+    #streak-toast.tier-25 { background: #e8fff0; color: #1a5c3a; border: 2px solid #38a169; }
+
+    /* ───── COMPLETE / SUMMARY SCREEN ───── */
+    #screen-complete {
+      display: none; flex-direction: column; align-items: center;
+      width: 100%; max-width: 760px; padding: 2rem 1.5rem 3rem; gap: 1.5rem;
+    }
+
+    .summary-hero { text-align: center; padding-top: 1.5rem; }
+    .summary-hero .trophy { font-size: 3.5rem; display: block; margin-bottom: 0.5rem; }
+    .summary-hero h2 { font-size: 2rem; font-weight: 800; color: #1a365d; }
+
+    /* Score ring */
+    .score-ring-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    }
+    .score-ring {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-weight: 800; position: relative;
+    }
+    .score-ring .ring-number { font-size: 2.6rem; line-height: 1; color: #1a365d; }
+    .score-ring .ring-label  { font-size: 0.72rem; color: #718096; font-weight: 600; letter-spacing: 0.02em; text-align: center; }
+    .ring-bg {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 10px solid #e2e8f0;
+    }
+    .ring-fill {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 10px solid transparent;
+      border-top-color: #48bb78;
+      transform-origin: center;
+    }
+
+    .perf-msg {
+      font-size: 1rem; color: #4a5568; font-style: italic;
+      text-align: center; max-width: 380px; line-height: 1.5;
+    }
+
+    /* Badges earned strip */
+    .badges-section { width: 100%; }
+    .badges-section h3 { font-size: 0.8rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .badges-strip { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .badge-chip {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.35rem 0.8rem; border-radius: 20px;
+      font-size: 0.85rem; font-weight: 700;
+    }
+    .badge-chip.tier-3  { background: #fff3cd; color: #7d5a00; border: 1.5px solid #f6c343; }
+    .badge-chip.tier-5  { background: #e8f4ff; color: #1a4f82; border: 1.5px solid #63b3ed; }
+    .badge-chip.tier-10 { background: #ffe8f7; color: #7b2563; border: 1.5px solid #d53f8c; }
+    .badge-chip.tier-25 { background: #e8fff0; color: #1a5c3a; border: 1.5px solid #38a169; }
+
+    /* Wrong states section */
+    .wrong-section { width: 100%; }
+    .wrong-section h3 { font-size: 0.8rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .wrong-section.perfect h3 { color: #38a169; }
+
+    .wrong-none {
+      background: #f0fff4; border: 2px solid #9ae6b4;
+      border-radius: 12px; padding: 1rem 1.5rem;
+      color: #276749; font-weight: 600; font-size: 0.98rem;
+      text-align: center;
+    }
+    .wrong-list {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .wrong-chip {
+      background: #fff5f5; border: 1.5px solid #feb2b2;
+      color: #9b2c2c; border-radius: 20px;
+      padding: 0.3rem 0.85rem; font-size: 0.88rem; font-weight: 600;
+    }
+
+    /* Summary action buttons */
+    .summary-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      padding: 0.9rem 2.2rem; font-size: 1rem; font-weight: 700;
+      background: linear-gradient(135deg, #4299e1, #667eea);
+      color: white; border: none; border-radius: 12px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(66,153,225,0.38);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgba(66,153,225,0.5); }
+    .btn-secondary {
+      padding: 0.9rem 2.2rem; font-size: 1rem; font-weight: 700;
+      background: white; color: #4299e1; border: 2px solid #4299e1;
+      border-radius: 12px; cursor: pointer; transition: background 0.18s;
+    }
+    .btn-secondary:hover { background: #ebf8ff; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ STREAK TOAST ═══════════ -->
+<div id="streak-toast">
+  <span class="toast-emoji" id="toast-emoji"></span>
+  <span class="toast-text">
+    <span class="toast-title" id="toast-title"></span>
+    <span class="toast-sub"   id="toast-sub"></span>
+  </span>
+</div>
+
+<!-- ═══════════ HOME SCREEN ═══════════ -->
+<div id="screen-home">
+  <div class="home-hero">
+    <h1>🗺️ US States Quiz</h1>
+    <p>Test your knowledge of all 50 states — pick a challenge to start</p>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="startGame(1)">
+      <span class="card-icon">🖱️</span>
+      <h2>Find the State</h2>
+      <p>A state name is shown at the top. Click the correct state on the map.</p>
+    </div>
+    <div class="mode-card" onclick="startGame(2)">
+      <span class="card-icon">⌨️</span>
+      <h2>Name the State</h2>
+      <p>A state is highlighted on the map in orange. Type its name to answer.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GAME SCREEN ═══════════ -->
+<div id="screen-game">
+  <div class="game-header">
+    <button class="hdr-btn" onclick="goHome()"><span>←</span> Home</button>
+    <div class="hdr-divider"></div>
+    <button class="hdr-btn" onclick="resetGame()"><span>↺</span> Restart</button>
+    <span class="header-score" id="header-score">Score: 0 / 0</span>
+    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <span class="progress-text" id="progress-text">0 / 50</span>
+    <div id="streak-display">🔥 <span id="streak-count">0</span></div>
+  </div>
+
+  <div class="prompt-area">
+    <div id="game-prompt"></div>
+    <div id="game-instruction"></div>
+  </div>
+
+  <div id="map-container">
+    <div id="map-loading"><div class="spinner"></div> Loading map…</div>
+  </div>
+
+  <div id="mode2-area">
+    <div id="autocomplete-wrap">
+      <input id="state-input" type="text" placeholder="Type state name…"
+             autocomplete="off" spellcheck="false" />
+      <div id="autocomplete-list"></div>
+    </div>
+    <button class="submit-btn" onclick="submitMode2()">Submit</button>
+  </div>
+
+  <div id="feedback"></div>
+</div>
+
+<!-- ═══════════ COMPLETE / SUMMARY SCREEN ═══════════ -->
+<div id="screen-complete">
+
+  <div class="summary-hero">
+    <span class="trophy" id="summary-trophy">🏆</span>
+    <h2 id="summary-heading">Quiz Complete!</h2>
+  </div>
+
+  <!-- Score ring -->
+  <div class="score-ring-wrap">
+    <div class="score-ring">
+      <div class="ring-bg"></div>
+      <div class="ring-fill" id="ring-fill"></div>
+      <span class="ring-number" id="ring-number">0</span>
+      <span class="ring-label" id="ring-label">/ 50 correct</span>
+    </div>
+    <div class="perf-msg" id="perf-msg"></div>
+  </div>
+
+  <!-- Earned badges -->
+  <div class="badges-section" id="badges-section" style="display:none;">
+    <h3>Badges Earned</h3>
+    <div class="badges-strip" id="badges-strip"></div>
+  </div>
+
+  <!-- Wrong states -->
+  <div class="wrong-section" id="wrong-section">
+    <h3 id="wrong-heading">Missed States</h3>
+    <div id="wrong-content"></div>
+  </div>
+
+  <div class="summary-actions">
+    <button class="btn-primary"   onclick="startGame(currentMode)">Play Again</button>
+    <button class="btn-secondary" onclick="goHome()">Change Challenge</button>
+  </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════ */
+const STATES = {
+  "01":"Alabama","02":"Alaska","04":"Arizona","05":"Arkansas",
+  "06":"California","08":"Colorado","09":"Connecticut","10":"Delaware",
+  "12":"Florida","13":"Georgia","15":"Hawaii","16":"Idaho",
+  "17":"Illinois","18":"Indiana","19":"Iowa","20":"Kansas",
+  "21":"Kentucky","22":"Louisiana","23":"Maine","24":"Maryland",
+  "25":"Massachusetts","26":"Michigan","27":"Minnesota","28":"Mississippi",
+  "29":"Missouri","30":"Montana","31":"Nebraska","32":"Nevada",
+  "33":"New Hampshire","34":"New Jersey","35":"New Mexico","36":"New York",
+  "37":"North Carolina","38":"North Dakota","39":"Ohio","40":"Oklahoma",
+  "41":"Oregon","42":"Pennsylvania","44":"Rhode Island","45":"South Carolina",
+  "46":"South Dakota","47":"Tennessee","48":"Texas","49":"Utah",
+  "50":"Vermont","51":"Virginia","53":"Washington","54":"West Virginia",
+  "55":"Wisconsin","56":"Wyoming"
+};
+const STATE_NAMES = Object.values(STATES).sort();
+
+/* ══════════════════════════════════════════════════
+   STREAK MILESTONE CONFIG
+══════════════════════════════════════════════════ */
+const MILESTONES = [
+  { streak: 3,  tier: 'tier-3',  emoji: '🔥', title: 'On Fire!',      sub: '3 correct in a row'       },
+  { streak: 5,  tier: 'tier-5',  emoji: '⚡', title: 'Lightning!',    sub: '5 correct in a row'       },
+  { streak: 10, tier: 'tier-10', emoji: '🚀', title: 'Unstoppable!',  sub: '10 correct in a row'      },
+  { streak: 25, tier: 'tier-25', emoji: '🌟', title: 'Half-Perfect!', sub: '25 correct in a row'      },
+];
+
+/* ══════════════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════════════ */
+let currentMode   = 1;
+let stateQueue    = [];
+let currentIndex  = 0;
+let score         = 0;
+let answered      = false;
+let streak        = 0;
+let bestStreak    = 0;
+let wrongStates   = [];   // names of states answered incorrectly
+let badgesEarned  = [];   // milestone objects earned this run
+let mapLoaded     = false;
+let svg           = null;
+let geoPath       = null;
+
+/* ══════════════════════════════════════════════════
+   MAP INIT
+══════════════════════════════════════════════════ */
+(async function initMap() {
+  try {
+    const us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+    const W = 960, H = 580;
+    const projection = d3.geoAlbersUsa().scale(1280).translate([W/2, H/2]);
+    geoPath = d3.geoPath().projection(projection);
+
+    svg = d3.select('#map-container')
+      .append('svg')
+      .attr('viewBox', `0 0 ${W} ${H}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    const features = topojson.feature(us, us.objects.states).features
+      .filter(d => STATES[fips(d)]);
+
+    svg.append('g').selectAll('path').data(features).join('path')
+      .attr('class', 'state-path')
+      .attr('data-fips', d => fips(d))
+      .attr('d', geoPath)
+      .on('click', (event, d) => {
+        if (currentMode === 1 && !answered) handleMode1Click(fips(d));
+      });
+
+    document.getElementById('map-loading').style.display = 'none';
+    mapLoaded = true;
+  } catch(e) {
+    document.getElementById('map-loading').innerHTML =
+      '⚠️ Could not load map. Check your internet connection and reload.';
+  }
+})();
+
+function fips(d) { return d.id.toString().padStart(2,'0'); }
+
+/* ══════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════ */
+function goHome() {
+  closeDropdown();
+  show('screen-home');
+  resetMapClasses();
+}
+
+function resetGame() { startGame(currentMode); }
+
+function startGame(mode) {
+  if (!mapLoaded) { alert('Map is still loading — please wait a moment.'); return; }
+  currentMode  = mode;
+  stateQueue   = shuffle(Object.keys(STATES));
+  currentIndex = 0;
+  score        = 0;
+  answered     = false;
+  streak       = 0;
+  bestStreak   = 0;
+  wrongStates  = [];
+  badgesEarned = [];
+
+  updateStreakDisplay();
+  document.getElementById('map-container').classList.toggle('mode1', mode === 1);
+  show('screen-game');
+  loadQuestion();
+}
+
+/* ══════════════════════════════════════════════════
+   GAME LOOP
+══════════════════════════════════════════════════ */
+function loadQuestion() {
+  if (currentIndex >= stateQueue.length) { showComplete(); return; }
+
+  answered = false;
+  const f = stateQueue[currentIndex];
+  resetMapClasses();
+  hideFeedback();
+  updateHeader();
+
+  if (currentMode === 1) {
+    document.getElementById('game-prompt').textContent      = `Find: ${STATES[f]}`;
+    document.getElementById('game-instruction').textContent = 'Click the correct state on the map';
+    document.getElementById('mode2-area').style.display     = 'none';
+  } else {
+    document.getElementById('game-prompt').textContent      = 'What state is this?';
+    document.getElementById('game-instruction').textContent = 'Type the state name below and select or press Submit';
+    document.getElementById('mode2-area').style.display     = 'flex';
+    const inp = document.getElementById('state-input');
+    inp.value = ''; inp.disabled = false;
+    closeDropdown();
+    setTimeout(() => inp.focus(), 40);
+    svg.selectAll(`.state-path[data-fips="${f}"]`).classed('target', true);
+  }
+}
+
+/* ── Mode 1 ── */
+function handleMode1Click(clickedFips) {
+  const targetFips = stateQueue[currentIndex];
+  answered = true;
+
+  if (clickedFips === targetFips) {
+    score++;
+    svg.selectAll(`.state-path[data-fips="${clickedFips}"]`).classed('correct', true);
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+    setTimeout(advance, 1200);
+  } else {
+    svg.selectAll(`.state-path[data-fips="${clickedFips}"]`).classed('incorrect', true);
+    svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('revealed',  true);
+    recordResult(false, STATES[targetFips]);
+    showFeedback(`✗ That was ${STATES[clickedFips] || '?'}. Correct state shown in blue.`, false);
+    setTimeout(advance, 2600);
+  }
+  updateHeader(true); // true = this question has just been answered
+}
+
+/* ── Mode 2 ── */
+function submitMode2() {
+  if (answered) return;
+  closeDropdown();
+  const input = document.getElementById('state-input').value.trim();
+  if (!input) return;
+
+  const targetFips = stateQueue[currentIndex];
+  const targetName = STATES[targetFips];
+  answered = true;
+  document.getElementById('state-input').disabled = true;
+
+  const isCorrect = input.toLowerCase() === targetName.toLowerCase();
+  if (isCorrect) {
+    score++;
+    svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('target', false).classed('correct', true);
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+    setTimeout(advance, 1200);
+  } else {
+    svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('target', false).classed('incorrect', true);
+    recordResult(false, targetName);
+    showFeedback(`✗ Incorrect — the answer was "${targetName}".`, false);
+    setTimeout(advance, 2200);
+  }
+  updateHeader(true); // true = this question has just been answered
+}
+
+function advance() { currentIndex++; loadQuestion(); }
+
+/* ══════════════════════════════════════════════════
+   STREAK & GAMIFICATION
+══════════════════════════════════════════════════ */
+function recordResult(correct, wrongStateName) {
+  if (correct) {
+    streak++;
+    bestStreak = Math.max(bestStreak, streak);
+    updateStreakDisplay();
+
+    const milestone = MILESTONES.find(m => m.streak === streak);
+    if (milestone) {
+      badgesEarned.push(milestone);
+      showToast(milestone);
+    }
+  } else {
+    streak = 0;
+    updateStreakDisplay();
+    if (wrongStateName) wrongStates.push(wrongStateName);
+  }
+}
+
+function updateStreakDisplay() {
+  const el = document.getElementById('streak-display');
+  const ct = document.getElementById('streak-count');
+  if (streak >= 3) {
+    ct.textContent = streak;
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+function getCorrectMessage() {
+  const msgs = ['✓ Correct!', '✓ Nice one!', '✓ You got it!', '✓ Nailed it!'];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+/* ── Toast ── */
+let toastTimer = null;
+function showToast(milestone) {
+  const toast = document.getElementById('streak-toast');
+  document.getElementById('toast-emoji').textContent = milestone.emoji;
+  document.getElementById('toast-title').textContent = milestone.title;
+  document.getElementById('toast-sub').textContent   = milestone.sub;
+
+  toast.className = `toast-in ${milestone.tier}`;
+
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('toast-in');
+  }, 2800);
+}
+
+/* ══════════════════════════════════════════════════
+   SUMMARY / COMPLETE SCREEN
+══════════════════════════════════════════════════ */
+function showComplete() {
+  const total = stateQueue.length;
+  const pct   = Math.round((score / total) * 100);
+
+  // Trophy & heading
+  const trophy  = pct === 100 ? '🏆' : pct >= 80 ? '🥇' : pct >= 60 ? '🥈' : '🥉';
+  document.getElementById('summary-trophy').textContent  = trophy;
+  document.getElementById('summary-heading').textContent = 'Quiz Complete!';
+
+  // Score ring
+  document.getElementById('ring-number').textContent = score;
+  document.getElementById('ring-label').textContent  = `/ ${total} correct`;
+  const ringFill = document.getElementById('ring-fill');
+  const deg = Math.round((score / total) * 360);
+  const colour = pct === 100 ? '#48bb78' : pct >= 60 ? '#4299e1' : '#f6ad55';
+  ringFill.style.background = `conic-gradient(${colour} ${deg}deg, transparent ${deg}deg)`;
+  ringFill.style.border     = 'none';
+  ringFill.style.borderRadius = '50%';
+  // Hollow out the centre with an inset circle via box-shadow trick
+  ringFill.style.webkitMask = 'radial-gradient(circle, transparent 48%, black 49%)';
+  ringFill.style.mask       = 'radial-gradient(circle, transparent 48%, black 49%)';
+
+  // Performance message
+  const perfMsg = pct === 100 ? "Flawless! A perfect run — you're a geography master! 🌟"
+    : pct >= 80 ? `Excellent! You got ${pct}% — just a handful of states tripped you up.`
+    : pct >= 60 ? `Good effort! ${pct}% — you're building a solid mental map.`
+    : `${pct}% this time — every quiz gets you closer. Keep it up!`;
+  document.getElementById('perf-msg').textContent = perfMsg;
+
+  // Badges earned — deduplicate and show count if earned more than once
+  const badgesSection = document.getElementById('badges-section');
+  const badgesStrip   = document.getElementById('badges-strip');
+  if (badgesEarned.length > 0) {
+    badgesSection.style.display = 'block';
+    // Count how many times each milestone was hit
+    const counts = {};
+    badgesEarned.forEach(b => { counts[b.streak] = (counts[b.streak] || 0) + 1; });
+    // Render in milestone order, each badge once
+    badgesStrip.innerHTML = MILESTONES
+      .filter(m => counts[m.streak])
+      .map(b => {
+        const n = counts[b.streak];
+        const times = n > 1 ? ` <span style="opacity:0.7;font-weight:500">(${n}×)</span>` : '';
+        return `<span class="badge-chip ${b.tier}">${b.emoji} ${b.title} · ${b.sub}${times}</span>`;
+      }).join('');
+  } else {
+    badgesSection.style.display = 'none';
+  }
+
+  // Wrong states
+  const wrongContent = document.getElementById('wrong-content');
+  const wrongSection = document.getElementById('wrong-section');
+  const wrongHeading = document.getElementById('wrong-heading');
+
+  if (wrongStates.length === 0) {
+    wrongSection.classList.add('perfect');
+    wrongHeading.textContent = 'Missed States';
+    wrongContent.innerHTML = '<div class="wrong-none">🎉 You didn\'t miss a single state — absolutely flawless!</div>';
+  } else {
+    wrongSection.classList.remove('perfect');
+    wrongHeading.textContent = `Missed States (${wrongStates.length})`;
+    const sorted = [...wrongStates].sort();
+    wrongContent.innerHTML = `<div class="wrong-list">${
+      sorted.map(s => `<span class="wrong-chip">${s}</span>`).join('')
+    }</div>`;
+  }
+
+  show('screen-complete');
+}
+
+/* ══════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════ */
+function showFeedback(msg, correct) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className   = `show ${correct ? 'fb-correct' : 'fb-incorrect'}`;
+}
+function hideFeedback() {
+  const el = document.getElementById('feedback');
+  el.className = ''; el.textContent = '';
+}
+function resetMapClasses() {
+  if (!svg) return;
+  svg.selectAll('.state-path')
+    .classed('target', false).classed('correct', false)
+    .classed('incorrect', false).classed('revealed', false);
+}
+function updateHeader(justAnswered = false) {
+  // If we just answered the current question, the index hasn't incremented yet —
+  // add 1 so the denominator stays in sync with the score numerator.
+  const done  = justAnswered ? currentIndex + 1 : currentIndex;
+  const total = stateQueue.length;
+  document.getElementById('header-score').textContent  = `Score: ${score} / ${done}`;
+  document.getElementById('progress-text').textContent = `${done} / ${total}`;
+  document.getElementById('progress-bar').style.width  = `${(done / total) * 100}%`;
+}
+function show(id) {
+  ['screen-home','screen-game','screen-complete'].forEach(s => {
+    document.getElementById(s).style.display = (s === id) ? 'flex' : 'none';
+  });
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ══════════════════════════════════════════════════
+   AUTOCOMPLETE
+══════════════════════════════════════════════════ */
+let acActiveIndex = -1;
+const stateInput = document.getElementById('state-input');
+const acList     = document.getElementById('autocomplete-list');
+
+stateInput.addEventListener('input', () => {
+  const q = stateInput.value.trim().toLowerCase();
+  acActiveIndex = -1;
+  if (!q) { closeDropdown(); return; }
+
+  const starts   = STATE_NAMES.filter(s => s.toLowerCase().startsWith(q));
+  const contains = STATE_NAMES.filter(s => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
+  const results  = [...starts, ...contains].slice(0, 8);
+  if (!results.length) { closeDropdown(); return; }
+
+  acList.innerHTML = results.map(name =>
+    `<div class="ac-item" data-name="${name}">${highlightMatch(name, q)}</div>`
+  ).join('');
+  acList.classList.add('open');
+  stateInput.classList.add('open');
+
+  acList.querySelectorAll('.ac-item').forEach(item => {
+    item.addEventListener('mousedown', e => {
+      e.preventDefault();
+      stateInput.value = item.dataset.name;
+      closeDropdown();
+      submitMode2();
+    });
+  });
+});
+
+stateInput.addEventListener('keydown', e => {
+  const items = acList.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acActiveIndex = Math.min(acActiveIndex+1, items.length-1);
+    updateAcActive(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acActiveIndex = Math.max(acActiveIndex-1, -1);
+    updateAcActive(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (acActiveIndex >= 0 && items[acActiveIndex]) {
+      stateInput.value = items[acActiveIndex].dataset.name;
+      closeDropdown();
+    }
+    submitMode2();
+  } else if (e.key === 'Escape') {
+    closeDropdown();
+  }
+});
+
+stateInput.addEventListener('blur', () => setTimeout(closeDropdown, 150));
+
+function updateAcActive(items) {
+  items.forEach((el,i) => el.classList.toggle('ac-active', i===acActiveIndex));
+  if (acActiveIndex >= 0 && items[acActiveIndex])
+    items[acActiveIndex].scrollIntoView({ block:'nearest' });
+}
+function closeDropdown() {
+  acList.classList.remove('open');
+  stateInput.classList.remove('open');
+  acActiveIndex = -1;
+}
+function highlightMatch(name, q) {
+  const idx = name.toLowerCase().indexOf(q);
+  if (idx === -1) return name;
+  return name.slice(0,idx) + `<strong>${name.slice(idx, idx+q.length)}</strong>` + name.slice(idx+q.length);
+}
+</script>
+</body>
+</html>
