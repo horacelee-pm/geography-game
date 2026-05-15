@@ -18,42 +18,34 @@
       align-items: center;
     }
 
-    /* ───── HOME SCREEN ───── */
+    /* ───── HOME ───── */
     #screen-home {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2.5rem;
-      min-height: 100vh;
-      padding: 2rem;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 2.5rem; min-height: 100vh; padding: 2rem;
     }
     .home-hero { text-align: center; }
     .home-hero h1 { font-size: 2.8rem; font-weight: 800; color: #1a365d; letter-spacing: -0.5px; }
     .home-hero p  { margin-top: 0.5rem; font-size: 1.1rem; color: #5a6a7e; }
 
-    .mode-cards { display: flex; gap: 1.75rem; flex-wrap: wrap; justify-content: center; }
+    .mode-cards { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
     .mode-card {
       background: white; border-radius: 18px;
-      padding: 2rem 2rem 1.75rem; width: 270px;
+      padding: 1.75rem 1.75rem 1.5rem; width: 250px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
       cursor: pointer; border: 3px solid transparent;
       transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
       text-align: left;
     }
     .mode-card:hover { border-color: #4299e1; transform: translateY(-5px); box-shadow: 0 10px 32px rgba(66,153,225,0.22); }
-    .mode-card .card-icon { font-size: 2.8rem; margin-bottom: 0.85rem; display: block; }
-    .mode-card h2 { font-size: 1.15rem; color: #2d3748; margin-bottom: 0.5rem; }
-    .mode-card p  { font-size: 0.88rem; color: #718096; line-height: 1.55; }
+    .mode-card .card-icon { font-size: 2.6rem; margin-bottom: 0.75rem; display: block; }
+    .mode-card h2 { font-size: 1.1rem; color: #2d3748; margin-bottom: 0.4rem; }
+    .mode-card p  { font-size: 0.85rem; color: #718096; line-height: 1.55; }
 
     /* ───── GAME SCREEN ───── */
     #screen-game {
-      display: none; flex-direction: column;
-      align-items: center; width: 100%;
-      max-width: 980px; padding: 1rem 1rem 2rem; gap: 0.75rem;
+      display: none; flex-direction: column; align-items: center;
+      width: 100%; max-width: 980px; padding: 1rem 1rem 2rem; gap: 0.75rem;
     }
-
-    /* Header */
     .game-header {
       display: flex; align-items: center; width: 100%;
       padding: 0.65rem 1rem; background: white;
@@ -72,40 +64,112 @@
     .progress-wrap { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
     .progress-bar  { height: 100%; background: linear-gradient(90deg, #4299e1, #667eea); border-radius: 4px; transition: width 0.35s ease; width: 0%; }
     .progress-text { font-size: 0.82rem; color: #a0aec0; white-space: nowrap; min-width: 44px; text-align: right; }
-
-    /* Streak indicator in header */
     #streak-display {
-      display: none;
-      align-items: center; gap: 0.3rem;
-      font-size: 0.85rem; font-weight: 700;
-      color: #dd6b20; background: #fff3e0;
-      padding: 0.25rem 0.6rem; border-radius: 20px;
-      flex-shrink: 0; white-space: nowrap;
+      display: none; align-items: center; gap: 0.3rem;
+      font-size: 0.85rem; font-weight: 700; color: #dd6b20;
+      background: #fff3e0; padding: 0.25rem 0.6rem;
+      border-radius: 20px; flex-shrink: 0; white-space: nowrap;
       border: 1.5px solid #fbd38d;
     }
     #streak-display.show { display: flex; }
 
-    /* Prompt */
     .prompt-area { text-align: center; }
     #game-prompt     { font-size: 1.75rem; font-weight: 800; color: #1a365d; min-height: 2.4rem; }
     #game-instruction{ font-size: 0.92rem; color: #718096; margin-top: 0.2rem; }
 
-    /* Map */
+    /* ───── MAP ───── */
     #map-container {
       width: 100%; background: white; border-radius: 16px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.09); overflow: hidden; position: relative;
     }
     #map-container svg { width: 100%; height: auto; display: block; }
 
+    /* State paths */
     .state-path { fill: #c8d6e5; stroke: white; stroke-width: 1.5px; cursor: default; transition: fill 0.15s; }
     #map-container.mode1 .state-path         { cursor: pointer; }
     #map-container.mode1 .state-path:hover   { fill: #90aece; }
-    .state-path.target   { fill: #f6ad55; cursor: default !important; }
+    /* Mode 3: states are reference only — neutral gray so blue features stand out */
+    #map-container.mode3 .state-path         { fill: #e0e0e0; pointer-events: none; cursor: default; }
+
+    /* State colour states */
+    .state-path.target   { fill: #f6ad55; }
     .state-path.correct  { fill: #48bb78; }
     .state-path.incorrect{ fill: #fc8181; }
     .state-path.revealed { fill: #4299e1; }
 
-    /* Loading */
+    /* ── Feature paths (Mode 3) ── */
+    .feature-path { pointer-events: none; }
+
+    .feature-river {
+      fill: none;
+      stroke: #3182ce;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .feature-mountain {
+      fill: none;
+      stroke: #744210;
+      stroke-width: 3.5;
+      stroke-dasharray: 8 4;
+      stroke-linecap: round;
+    }
+    /* mountain range that's a polygon (Black Hills) */
+    .feature-mountain-poly {
+      fill: rgba(116,66,16,0.15);
+      stroke: #744210;
+      stroke-width: 2;
+      stroke-dasharray: 6 3;
+    }
+    .feature-lake {
+      fill: #3182ce;
+      fill-opacity: 0.55;
+      stroke: #2c5282;
+      stroke-width: 1;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    /* Hit areas for rivers and mountains */
+    .feature-hit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 20px;
+      cursor: pointer;
+      pointer-events: stroke;
+    }
+    /* Hit area for mountain polygon */
+    .feature-hit-poly {
+      fill: transparent;
+      stroke: transparent;
+      stroke-width: 8px;
+      cursor: pointer;
+      pointer-events: all;
+    }
+
+    /* Hover highlights */
+    .feature-path.fhover.feature-river    { stroke: #63b3ed; stroke-width: 3.5; }
+    .feature-path.fhover.feature-mountain { stroke: #d69e2e; stroke-width: 4.5; }
+    .feature-path.fhover.feature-lake     { fill-opacity: 0.8; }
+    .feature-path.fhover.feature-mountain-poly { fill: rgba(214,158,46,0.25); stroke: #d69e2e; }
+
+    /* Correct / incorrect / revealed */
+    .feature-path.fcorrect.feature-river    { stroke: #38a169; stroke-width: 4; }
+    .feature-path.fcorrect.feature-mountain { stroke: #38a169; stroke-width: 5; }
+    .feature-path.fcorrect.feature-lake     { fill: #38a169; fill-opacity: 0.75; stroke: #276749; }
+    .feature-path.fcorrect.feature-mountain-poly { fill: rgba(56,161,105,0.35); stroke: #38a169; }
+
+    .feature-path.fincorrect.feature-river    { stroke: #e53e3e; stroke-width: 4; }
+    .feature-path.fincorrect.feature-mountain { stroke: #e53e3e; stroke-width: 5; }
+    .feature-path.fincorrect.feature-lake     { fill: #e53e3e; fill-opacity: 0.75; stroke: #9b2c2c; }
+    .feature-path.fincorrect.feature-mountain-poly { fill: rgba(229,62,62,0.35); stroke: #e53e3e; }
+
+    .feature-path.frevealed.feature-river    { stroke: #4299e1; stroke-width: 4; }
+    .feature-path.frevealed.feature-mountain { stroke: #4299e1; stroke-width: 5; }
+    .feature-path.frevealed.feature-lake     { fill: #4299e1; fill-opacity: 0.75; stroke: #2b6cb0; }
+    .feature-path.frevealed.feature-mountain-poly { fill: rgba(66,153,225,0.35); stroke: #4299e1; }
+
+    /* Loading overlay */
     #map-loading {
       position: absolute; inset: 0; display: flex; align-items: center;
       justify-content: center; background: white; border-radius: 16px;
@@ -118,16 +182,27 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Feature legend (mode 3) ── */
+    #feature-legend {
+      display: none;
+      gap: 1.2rem; flex-wrap: wrap; justify-content: center;
+      font-size: 0.82rem; color: #4a5568;
+    }
+    .leg-item { display: flex; align-items: center; gap: 0.4rem; }
+    .leg-swatch { display: inline-block; border-radius: 2px; flex-shrink: 0; }
+    .leg-river    { width: 24px; height: 3px; background: #3182ce; }
+    .leg-mountain { width: 24px; height: 3px; background: #744210; border-top: 3px dashed #744210; }
+    .leg-lake     { width: 14px; height: 14px; background: rgba(49,130,206,0.55); border: 1px solid #2c5282; border-radius: 2px; }
+
     /* Mode 2 input */
     #mode2-area { display: none; align-items: flex-start; gap: 0.75rem; position: relative; }
     #autocomplete-wrap { position: relative; width: 260px; }
     #state-input {
       width: 100%; padding: 0.7rem 1.1rem; font-size: 1.05rem;
-      border: 2px solid #e2e8f0; border-radius: 10px; outline: none;
-      transition: border-color 0.18s;
+      border: 2px solid #e2e8f0; border-radius: 10px; outline: none; transition: border-color 0.18s;
     }
-    #state-input:focus       { border-color: #4299e1; }
-    #state-input.open        { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-color: #4299e1; }
+    #state-input:focus { border-color: #4299e1; }
+    #state-input.open  { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-color: #4299e1; }
     #autocomplete-list {
       display: none; position: absolute; top: 100%; left: 0; right: 0;
       background: white; border: 2px solid #4299e1; border-top: none;
@@ -138,7 +213,6 @@
     .ac-item { padding: 0.55rem 1.1rem; cursor: pointer; font-size: 1rem; color: #2d3748; transition: background 0.1s; }
     .ac-item:hover, .ac-item.ac-active { background: #ebf8ff; color: #2b6cb0; }
     .ac-item:last-child { border-radius: 0 0 8px 8px; }
-
     .submit-btn {
       padding: 0.7rem 1.4rem; font-size: 0.98rem; font-weight: 700;
       background: #4299e1; color: white; border: none; border-radius: 10px;
@@ -146,12 +220,11 @@
     }
     .submit-btn:hover { background: #3182ce; }
 
-    /* Feedback banner */
+    /* Feedback */
     #feedback {
       padding: 0.65rem 1.6rem; border-radius: 10px;
       font-weight: 600; font-size: 0.98rem; min-height: 2.4rem;
-      display: flex; align-items: center; justify-content: center;
-      visibility: hidden;
+      display: flex; align-items: center; justify-content: center; visibility: hidden;
     }
     #feedback.show        { visibility: visible; }
     #feedback.fb-correct  { background: #c6f6d5; color: #22543d; }
@@ -160,109 +233,64 @@
     /* ───── STREAK TOAST ───── */
     #streak-toast {
       position: fixed; top: -120px; left: 50%; transform: translateX(-50%);
-      z-index: 1000;
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.85rem 1.6rem;
-      border-radius: 14px;
+      z-index: 1000; display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1.6rem; border-radius: 14px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-      font-weight: 700; font-size: 1.05rem;
-      white-space: nowrap;
-      transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      pointer-events: none;
+      font-weight: 700; font-size: 1.05rem; white-space: nowrap;
+      transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none;
     }
-    #streak-toast.toast-in  { top: 18px; }
+    #streak-toast.toast-in { top: 18px; }
     #streak-toast .toast-emoji { font-size: 1.6rem; }
     #streak-toast .toast-text  { display: flex; flex-direction: column; line-height: 1.3; }
     #streak-toast .toast-title { font-size: 1.05rem; }
     #streak-toast .toast-sub   { font-size: 0.8rem; font-weight: 500; opacity: 0.85; }
-
-    /* Toast colour themes */
     #streak-toast.tier-3  { background: #fff3cd; color: #7d5a00; border: 2px solid #f6c343; }
     #streak-toast.tier-5  { background: #e8f4ff; color: #1a4f82; border: 2px solid #63b3ed; }
     #streak-toast.tier-10 { background: #ffe8f7; color: #7b2563; border: 2px solid #d53f8c; }
     #streak-toast.tier-25 { background: #e8fff0; color: #1a5c3a; border: 2px solid #38a169; }
 
-    /* ───── COMPLETE / SUMMARY SCREEN ───── */
+    /* ───── COMPLETE SCREEN ───── */
     #screen-complete {
       display: none; flex-direction: column; align-items: center;
       width: 100%; max-width: 760px; padding: 2rem 1.5rem 3rem; gap: 1.5rem;
     }
-
     .summary-hero { text-align: center; padding-top: 1.5rem; }
     .summary-hero .trophy { font-size: 3.5rem; display: block; margin-bottom: 0.5rem; }
     .summary-hero h2 { font-size: 2rem; font-weight: 800; color: #1a365d; }
 
-    /* Score ring */
-    .score-ring-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-    }
+    .score-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
     .score-ring {
-      width: 130px; height: 130px;
-      border-radius: 50%;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      width: 130px; height: 130px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       font-weight: 800; position: relative;
     }
     .score-ring .ring-number { font-size: 2.6rem; line-height: 1; color: #1a365d; }
-    .score-ring .ring-label  { font-size: 0.72rem; color: #718096; font-weight: 600; letter-spacing: 0.02em; text-align: center; }
-    .ring-bg {
-      position: absolute; inset: 0; border-radius: 50%;
-      border: 10px solid #e2e8f0;
-    }
-    .ring-fill {
-      position: absolute; inset: 0; border-radius: 50%;
-      border: 10px solid transparent;
-      border-top-color: #48bb78;
-      transform-origin: center;
-    }
+    .score-ring .ring-label  { font-size: 0.72rem; color: #718096; font-weight: 600; text-align: center; }
+    .ring-bg   { position: absolute; inset: 0; border-radius: 50%; border: 10px solid #e2e8f0; }
+    .ring-fill { position: absolute; inset: 0; border-radius: 50%; }
+    .perf-msg  { font-size: 1rem; color: #4a5568; font-style: italic; text-align: center; max-width: 380px; line-height: 1.5; }
 
-    .perf-msg {
-      font-size: 1rem; color: #4a5568; font-style: italic;
-      text-align: center; max-width: 380px; line-height: 1.5;
-    }
-
-    /* Badges earned strip */
     .badges-section { width: 100%; }
     .badges-section h3 { font-size: 0.8rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
     .badges-strip { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-    .badge-chip {
-      display: flex; align-items: center; gap: 0.4rem;
-      padding: 0.35rem 0.8rem; border-radius: 20px;
-      font-size: 0.85rem; font-weight: 700;
-    }
+    .badge-chip { display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
     .badge-chip.tier-3  { background: #fff3cd; color: #7d5a00; border: 1.5px solid #f6c343; }
     .badge-chip.tier-5  { background: #e8f4ff; color: #1a4f82; border: 1.5px solid #63b3ed; }
     .badge-chip.tier-10 { background: #ffe8f7; color: #7b2563; border: 1.5px solid #d53f8c; }
     .badge-chip.tier-25 { background: #e8fff0; color: #1a5c3a; border: 1.5px solid #38a169; }
 
-    /* Wrong states section */
     .wrong-section { width: 100%; }
     .wrong-section h3 { font-size: 0.8rem; font-weight: 700; color: #a0aec0; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.6rem; }
-    .wrong-section.perfect h3 { color: #38a169; }
+    .wrong-none { background: #f0fff4; border: 2px solid #9ae6b4; border-radius: 12px; padding: 1rem 1.5rem; color: #276749; font-weight: 600; font-size: 0.98rem; text-align: center; }
+    .wrong-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .wrong-chip { background: #fff5f5; border: 1.5px solid #feb2b2; color: #9b2c2c; border-radius: 20px; padding: 0.3rem 0.85rem; font-size: 0.88rem; font-weight: 600; }
 
-    .wrong-none {
-      background: #f0fff4; border: 2px solid #9ae6b4;
-      border-radius: 12px; padding: 1rem 1.5rem;
-      color: #276749; font-weight: 600; font-size: 0.98rem;
-      text-align: center;
-    }
-    .wrong-list {
-      display: flex; flex-wrap: wrap; gap: 0.5rem;
-    }
-    .wrong-chip {
-      background: #fff5f5; border: 1.5px solid #feb2b2;
-      color: #9b2c2c; border-radius: 20px;
-      padding: 0.3rem 0.85rem; font-size: 0.88rem; font-weight: 600;
-    }
-
-    /* Summary action buttons */
     .summary-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
     .btn-primary {
       padding: 0.9rem 2.2rem; font-size: 1rem; font-weight: 700;
-      background: linear-gradient(135deg, #4299e1, #667eea);
-      color: white; border: none; border-radius: 12px; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(66,153,225,0.38);
-      transition: transform 0.18s, box-shadow 0.18s;
+      background: linear-gradient(135deg, #4299e1, #667eea); color: white;
+      border: none; border-radius: 12px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(66,153,225,0.38); transition: transform 0.18s, box-shadow 0.18s;
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 7px 22px rgba(66,153,225,0.5); }
     .btn-secondary {
@@ -287,19 +315,24 @@
 <!-- ═══════════ HOME SCREEN ═══════════ -->
 <div id="screen-home">
   <div class="home-hero">
-    <h1>🗺️ US States Quiz</h1>
-    <p>Test your knowledge of all 50 states — pick a challenge to start</p>
+    <h1>🗺️ US Geography Quiz</h1>
+    <p>Test your knowledge of the United States — pick a challenge to start</p>
   </div>
   <div class="mode-cards">
     <div class="mode-card" onclick="startGame(1)">
       <span class="card-icon">🖱️</span>
       <h2>Find the State</h2>
-      <p>A state name is shown at the top. Click the correct state on the map.</p>
+      <p>A state name is shown. Click the correct state on the map.</p>
     </div>
     <div class="mode-card" onclick="startGame(2)">
       <span class="card-icon">⌨️</span>
       <h2>Name the State</h2>
-      <p>A state is highlighted on the map in orange. Type its name to answer.</p>
+      <p>A state is highlighted in orange. Type its name to answer.</p>
+    </div>
+    <div class="mode-card" onclick="startGame(3)">
+      <span class="card-icon">🏔️</span>
+      <h2>Find the Feature</h2>
+      <p>Rivers, mountain ranges, and lakes are drawn on the map. Click the named feature.</p>
     </div>
   </div>
 </div>
@@ -325,10 +358,16 @@
     <div id="map-loading"><div class="spinner"></div> Loading map…</div>
   </div>
 
+  <!-- Legend shown only in mode 3 -->
+  <div id="feature-legend">
+    <span class="leg-item"><span class="leg-swatch leg-river"></span> River</span>
+    <span class="leg-item"><span class="leg-swatch leg-mountain"></span> Mountain Range</span>
+    <span class="leg-item"><span class="leg-swatch leg-lake"></span> Lake / Water Body</span>
+  </div>
+
   <div id="mode2-area">
     <div id="autocomplete-wrap">
-      <input id="state-input" type="text" placeholder="Type state name…"
-             autocomplete="off" spellcheck="false" />
+      <input id="state-input" type="text" placeholder="Type state name…" autocomplete="off" spellcheck="false" />
       <div id="autocomplete-list"></div>
     </div>
     <button class="submit-btn" onclick="submitMode2()">Submit</button>
@@ -337,47 +376,38 @@
   <div id="feedback"></div>
 </div>
 
-<!-- ═══════════ COMPLETE / SUMMARY SCREEN ═══════════ -->
+<!-- ═══════════ COMPLETE SCREEN ═══════════ -->
 <div id="screen-complete">
-
   <div class="summary-hero">
     <span class="trophy" id="summary-trophy">🏆</span>
     <h2 id="summary-heading">Quiz Complete!</h2>
   </div>
-
-  <!-- Score ring -->
   <div class="score-ring-wrap">
     <div class="score-ring">
       <div class="ring-bg"></div>
       <div class="ring-fill" id="ring-fill"></div>
       <span class="ring-number" id="ring-number">0</span>
-      <span class="ring-label" id="ring-label">/ 50 correct</span>
+      <span class="ring-label"  id="ring-label">/ 50 correct</span>
     </div>
     <div class="perf-msg" id="perf-msg"></div>
   </div>
-
-  <!-- Earned badges -->
   <div class="badges-section" id="badges-section" style="display:none;">
     <h3>Badges Earned</h3>
     <div class="badges-strip" id="badges-strip"></div>
   </div>
-
-  <!-- Wrong states -->
   <div class="wrong-section" id="wrong-section">
-    <h3 id="wrong-heading">Missed States</h3>
+    <h3 id="wrong-heading">Missed</h3>
     <div id="wrong-content"></div>
   </div>
-
   <div class="summary-actions">
     <button class="btn-primary"   onclick="startGame(currentMode)">Play Again</button>
     <button class="btn-secondary" onclick="goHome()">Change Challenge</button>
   </div>
-
 </div>
 
 <script>
 /* ══════════════════════════════════════════════════
-   DATA
+   STATE DATA
 ══════════════════════════════════════════════════ */
 const STATES = {
   "01":"Alabama","02":"Alaska","04":"Arizona","05":"Arkansas",
@@ -397,30 +427,166 @@ const STATES = {
 const STATE_NAMES = Object.values(STATES).sort();
 
 /* ══════════════════════════════════════════════════
-   STREAK MILESTONE CONFIG
+   GEOGRAPHIC FEATURES DATA (GeoJSON geometries)
+   Coordinates: [longitude, latitude]
+══════════════════════════════════════════════════ */
+const FEATURES = [
+  // ── MOUNTAIN RANGES ──
+  { id:'rocky-mountains', name:'Rocky Mountains', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-114.0,49.0],[-112.5,47.0],[-110.5,44.5],[-108.5,42.5],
+      [-106.5,40.5],[-106.5,38.5],[-106.0,37.0],[-106.5,36.0]
+    ]}},
+  { id:'appalachian-mountains', name:'Appalachian Mountains', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-70.0,44.5],[-71.5,43.8],[-74.0,41.5],[-77.5,40.0],
+      [-79.5,38.5],[-81.0,37.0],[-82.5,35.5],[-84.5,34.5]
+    ]}},
+  { id:'sierra-nevada', name:'Sierra Nevada', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-120.5,39.5],[-119.8,38.2],[-118.8,37.0],[-118.3,36.3]
+    ]}},
+  { id:'cascade-range', name:'Cascade Range', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-121.7,49.0],[-121.5,47.5],[-121.5,46.0],[-121.8,44.5],
+      [-121.8,42.5],[-122.0,41.5]
+    ]}},
+  { id:'alaska-range', name:'Alaska Range', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-155.0,63.8],[-152.5,62.5],[-150.0,62.0],[-148.0,62.5],
+      [-145.5,62.5],[-143.0,63.0]
+    ]}},
+  { id:'blue-ridge-mountains', name:'Blue Ridge Mountains', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-78.5,38.8],[-80.0,37.0],[-81.5,36.0],[-83.0,35.5],[-84.2,34.8]
+    ]}},
+  { id:'black-hills', name:'Black Hills', type:'mountain',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-104.2,44.8],[-103.5,44.8],[-103.0,44.2],[-103.2,43.7],
+      [-104.0,43.7],[-104.5,44.2],[-104.2,44.8]
+    ]]}},
+
+  // ── RIVERS ──
+  { id:'mississippi-river', name:'Mississippi River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-95.2,47.2],[-94.5,45.5],[-91.2,44.0],[-90.5,40.5],
+      [-89.8,38.5],[-89.2,36.5],[-91.4,33.5],[-90.8,31.5],[-89.3,29.1]
+    ]}},
+  { id:'missouri-river', name:'Missouri River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-111.5,45.9],[-108.2,47.2],[-103.5,47.5],[-100.5,46.8],
+      [-98.5,44.2],[-97.3,42.5],[-96.8,41.5],[-95.8,41.0],
+      [-94.5,39.5],[-90.4,38.8]
+    ]}},
+  { id:'colorado-river', name:'Colorado River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-105.8,40.5],[-109.0,38.5],[-110.8,38.8],[-111.5,37.0],
+      [-113.0,36.5],[-114.0,35.2],[-114.5,34.0],[-114.7,32.7]
+    ]}},
+  { id:'rio-grande', name:'Rio Grande', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-107.0,37.5],[-106.5,35.5],[-106.7,32.3],[-104.8,29.8],
+      [-103.5,29.5],[-100.5,28.7],[-99.0,27.5],[-97.5,26.0]
+    ]}},
+  { id:'ohio-river', name:'Ohio River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-80.0,40.4],[-82.5,38.7],[-84.5,38.8],[-85.8,38.0],
+      [-87.5,37.4],[-89.1,37.0]
+    ]}},
+  { id:'columbia-river', name:'Columbia River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-117.0,49.0],[-118.0,47.5],[-119.5,48.5],[-118.5,46.2],
+      [-120.0,46.2],[-121.5,45.6],[-122.8,45.5],[-124.1,46.2]
+    ]}},
+  { id:'snake-river', name:'Snake River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-110.5,44.5],[-111.8,42.9],[-113.5,42.6],[-115.0,43.5],
+      [-116.8,43.8],[-117.0,45.8],[-118.5,46.0]
+    ]}},
+  { id:'arkansas-river', name:'Arkansas River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-106.3,39.2],[-105.0,38.5],[-102.5,38.0],[-99.5,37.8],
+      [-97.5,37.5],[-95.0,36.5],[-94.0,35.3],[-91.2,33.8]
+    ]}},
+  { id:'tennessee-river', name:'Tennessee River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-84.0,35.9],[-85.5,35.3],[-86.5,35.8],[-87.2,35.9],
+      [-88.4,35.0],[-88.2,36.5],[-87.9,37.0]
+    ]}},
+  { id:'red-river', name:'Red River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-103.0,34.5],[-99.5,34.5],[-97.2,33.8],[-96.5,33.6],
+      [-94.5,33.5],[-93.5,32.5],[-91.5,31.0]
+    ]}},
+
+  // ── BODIES OF WATER ──
+  { id:'lake-superior', name:'Lake Superior', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-92.0,46.7],[-92.5,47.5],[-91.6,48.2],[-89.8,48.0],[-88.5,48.2],
+      [-86.5,48.3],[-84.1,48.0],[-84.5,47.2],[-86.0,46.8],
+      [-88.3,46.7],[-90.0,46.5],[-92.0,46.7]
+    ]]}},
+  { id:'lake-michigan', name:'Lake Michigan', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-87.6,41.6],[-87.3,42.5],[-87.8,44.0],[-88.0,45.2],
+      [-87.5,46.0],[-86.8,46.1],[-86.0,45.5],[-85.8,44.0],
+      [-86.0,42.5],[-86.5,41.6],[-87.6,41.6]
+    ]]}},
+  { id:'lake-huron', name:'Lake Huron', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-84.5,43.5],[-84.0,44.5],[-84.5,45.8],[-84.2,46.5],
+      [-83.5,46.0],[-82.5,45.5],[-82.0,44.5],[-82.5,43.7],
+      [-83.5,43.3],[-84.5,43.5]
+    ]]}},
+  { id:'lake-erie', name:'Lake Erie', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-83.5,41.7],[-83.0,42.5],[-81.5,43.0],[-79.5,43.0],
+      [-79.0,42.8],[-79.5,42.5],[-80.5,42.2],[-82.0,41.9],[-83.5,41.7]
+    ]]}},
+  { id:'lake-ontario', name:'Lake Ontario', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-79.8,43.3],[-79.5,43.8],[-78.5,44.1],[-76.8,44.2],
+      [-76.0,44.1],[-76.5,43.7],[-78.2,43.4],[-79.8,43.3]
+    ]]}},
+  { id:'great-salt-lake', name:'Great Salt Lake', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-113.0,40.8],[-113.5,41.1],[-113.0,41.5],[-112.5,41.6],
+      [-112.0,41.2],[-112.0,40.9],[-112.5,40.6],[-113.0,40.8]
+    ]]}},
+  { id:'chesapeake-bay', name:'Chesapeake Bay', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-76.6,39.4],[-76.1,38.8],[-76.2,38.0],[-76.0,37.2],
+      [-76.5,37.0],[-76.7,37.8],[-76.5,38.5],[-76.7,39.0],[-76.6,39.4]
+    ]]}}
+];
+
+/* ══════════════════════════════════════════════════
+   MILESTONES
 ══════════════════════════════════════════════════ */
 const MILESTONES = [
-  { streak: 3,  tier: 'tier-3',  emoji: '🔥', title: 'On Fire!',      sub: '3 correct in a row'       },
-  { streak: 5,  tier: 'tier-5',  emoji: '⚡', title: 'Lightning!',    sub: '5 correct in a row'       },
-  { streak: 10, tier: 'tier-10', emoji: '🚀', title: 'Unstoppable!',  sub: '10 correct in a row'      },
-  { streak: 25, tier: 'tier-25', emoji: '🌟', title: 'Half-Perfect!', sub: '25 correct in a row'      },
+  { streak:3,  tier:'tier-3',  emoji:'🔥', title:'On Fire!',      sub:'3 correct in a row'  },
+  { streak:5,  tier:'tier-5',  emoji:'⚡', title:'Lightning!',    sub:'5 correct in a row'  },
+  { streak:10, tier:'tier-10', emoji:'🚀', title:'Unstoppable!',  sub:'10 correct in a row' },
+  { streak:25, tier:'tier-25', emoji:'🌟', title:'Half-Perfect!', sub:'25 correct in a row' },
 ];
 
 /* ══════════════════════════════════════════════════
    GAME STATE
 ══════════════════════════════════════════════════ */
 let currentMode   = 1;
-let stateQueue    = [];
+let stateQueue    = [];   // FIPS keys (modes 1&2) or feature indices (mode 3)
 let currentIndex  = 0;
 let score         = 0;
 let answered      = false;
 let streak        = 0;
 let bestStreak    = 0;
-let wrongStates   = [];   // names of states answered incorrectly
-let badgesEarned  = [];   // milestone objects earned this run
+let wrongItems    = [];   // wrong state names or feature names
+let badgesEarned  = [];
 let mapLoaded     = false;
+let featuresReady = false;
 let svg           = null;
 let geoPath       = null;
+let featuresGroup = null; // SVG group for all geo features
 
 /* ══════════════════════════════════════════════════
    MAP INIT
@@ -437,20 +603,31 @@ let geoPath       = null;
       .attr('viewBox', `0 0 ${W} ${H}`)
       .attr('preserveAspectRatio', 'xMidYMid meet');
 
+    // States layer
     const features = topojson.feature(us, us.objects.states).features
       .filter(d => STATES[fips(d)]);
+    svg.append('g').attr('id','states-layer')
+      .selectAll('path').data(features).join('path')
+        .attr('class','state-path')
+        .attr('data-fips', d => fips(d))
+        .attr('d', geoPath)
+        .on('click', (event, d) => {
+          if (currentMode === 1 && !answered) handleMode1Click(fips(d));
+        });
 
-    svg.append('g').selectAll('path').data(features).join('path')
-      .attr('class', 'state-path')
-      .attr('data-fips', d => fips(d))
-      .attr('d', geoPath)
-      .on('click', (event, d) => {
-        if (currentMode === 1 && !answered) handleMode1Click(fips(d));
-      });
+    // Features layer (always rendered, shown/hidden per mode)
+    featuresGroup = svg.append('g').attr('id','features-layer').style('display','none');
+    try {
+      initFeatures();
+      featuresReady = true;
+    } catch(fe) {
+      console.error('Geographic features failed to initialize:', fe);
+    }
 
     document.getElementById('map-loading').style.display = 'none';
     mapLoaded = true;
   } catch(e) {
+    console.error('Map failed to load:', e);
     document.getElementById('map-loading').innerHTML =
       '⚠️ Could not load map. Check your internet connection and reload.';
   }
@@ -459,30 +636,100 @@ let geoPath       = null;
 function fips(d) { return d.id.toString().padStart(2,'0'); }
 
 /* ══════════════════════════════════════════════════
+   FEATURE LAYER
+══════════════════════════════════════════════════ */
+function initFeatures() {
+  FEATURES.forEach(feature => {
+    const isMtnPoly = feature.type === 'mountain' && feature.geometry.type === 'Polygon';
+    const visClass  = isMtnPoly ? 'feature-path feature-mountain-poly'
+                                : `feature-path feature-${feature.type}`;
+
+    const g = featuresGroup.append('g')
+      .attr('class', 'feature-group')
+      .attr('data-fid', feature.id);
+
+    // Visible path
+    g.append('path')
+      .datum(feature.geometry)
+      .attr('d', geoPath)
+      .attr('class', visClass)
+      .attr('id', `fp-${feature.id}`);
+
+    // Hit area — wider transparent overlay for easy clicking
+    const hitClass = (isMtnPoly || feature.type === 'lake') ? 'feature-hit-poly' : 'feature-hit';
+    g.append('path')
+      .datum(feature.geometry)
+      .attr('d', geoPath)
+      .attr('class', hitClass);
+
+    // Events
+    g.on('click', () => {
+      if (currentMode === 3 && !answered) handleFeatureClick(feature.id);
+    }).on('mouseover', () => {
+      if (currentMode === 3 && !answered)
+        d3.select(`#fp-${feature.id}`).classed('fhover', true);
+    }).on('mouseout', () => {
+      d3.select(`#fp-${feature.id}`).classed('fhover', false);
+    });
+  });
+}
+
+function showFeatureLayer() { if (featuresGroup) featuresGroup.style('display', null); }
+function hideFeatureLayer() { if (featuresGroup) featuresGroup.style('display', 'none'); }
+
+function resetFeatureClasses() {
+  if (!featuresGroup) return;
+  featuresGroup.selectAll('.feature-path')
+    .classed('fhover', false)
+    .classed('fcorrect', false)
+    .classed('fincorrect', false)
+    .classed('frevealed', false);
+}
+
+/* ══════════════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════════════ */
 function goHome() {
   closeDropdown();
   show('screen-home');
   resetMapClasses();
+  resetFeatureClasses();
+  hideFeatureLayer();
 }
 
 function resetGame() { startGame(currentMode); }
 
 function startGame(mode) {
   if (!mapLoaded) { alert('Map is still loading — please wait a moment.'); return; }
+  if (mode === 3 && !featuresReady) { alert('Geographic features could not be loaded. Please reload the page.'); return; }
   currentMode  = mode;
-  stateQueue   = shuffle(Object.keys(STATES));
   currentIndex = 0;
   score        = 0;
   answered     = false;
   streak       = 0;
   bestStreak   = 0;
-  wrongStates  = [];
+  wrongItems   = [];
   badgesEarned = [];
 
+  // Build queue
+  if (mode === 3) {
+    stateQueue = shuffle(FEATURES.map((_, i) => i));
+  } else {
+    stateQueue = shuffle(Object.keys(STATES));
+  }
+
+  // Map container classes
+  const mc = document.getElementById('map-container');
+  mc.classList.toggle('mode1', mode === 1);
+  mc.classList.toggle('mode3', mode === 3);
+
+  // Feature layer visibility
+  if (mode === 3) showFeatureLayer(); else hideFeatureLayer();
+
+  // Legend
+  document.getElementById('feature-legend').style.display = mode === 3 ? 'flex' : 'none';
+
   updateStreakDisplay();
-  document.getElementById('map-container').classList.toggle('mode1', mode === 1);
   show('screen-game');
   loadQuestion();
 }
@@ -494,16 +741,20 @@ function loadQuestion() {
   if (currentIndex >= stateQueue.length) { showComplete(); return; }
 
   answered = false;
-  const f = stateQueue[currentIndex];
   resetMapClasses();
+  resetFeatureClasses();
   hideFeedback();
   updateHeader();
 
+  document.getElementById('mode2-area').style.display = 'none';
+
   if (currentMode === 1) {
-    document.getElementById('game-prompt').textContent      = `Find: ${STATES[f]}`;
+    const name = STATES[stateQueue[currentIndex]];
+    document.getElementById('game-prompt').textContent      = `Find: ${name}`;
     document.getElementById('game-instruction').textContent = 'Click the correct state on the map';
-    document.getElementById('mode2-area').style.display     = 'none';
-  } else {
+
+  } else if (currentMode === 2) {
+    const f = stateQueue[currentIndex];
     document.getElementById('game-prompt').textContent      = 'What state is this?';
     document.getElementById('game-instruction').textContent = 'Type the state name below and select or press Submit';
     document.getElementById('mode2-area').style.display     = 'flex';
@@ -512,6 +763,11 @@ function loadQuestion() {
     closeDropdown();
     setTimeout(() => inp.focus(), 40);
     svg.selectAll(`.state-path[data-fips="${f}"]`).classed('target', true);
+
+  } else { // mode 3
+    const feature = FEATURES[stateQueue[currentIndex]];
+    document.getElementById('game-prompt').textContent      = `Find: ${feature.name}`;
+    document.getElementById('game-instruction').textContent = 'Click the correct feature on the map';
   }
 }
 
@@ -528,12 +784,12 @@ function handleMode1Click(clickedFips) {
     setTimeout(advance, 1200);
   } else {
     svg.selectAll(`.state-path[data-fips="${clickedFips}"]`).classed('incorrect', true);
-    svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('revealed',  true);
+    svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('revealed', true);
     recordResult(false, STATES[targetFips]);
     showFeedback(`✗ That was ${STATES[clickedFips] || '?'}. Correct state shown in blue.`, false);
     setTimeout(advance, 2600);
   }
-  updateHeader(true); // true = this question has just been answered
+  updateHeader(true);
 }
 
 /* ── Mode 2 ── */
@@ -561,7 +817,29 @@ function submitMode2() {
     showFeedback(`✗ Incorrect — the answer was "${targetName}".`, false);
     setTimeout(advance, 2200);
   }
-  updateHeader(true); // true = this question has just been answered
+  updateHeader(true);
+}
+
+/* ── Mode 3 ── */
+function handleFeatureClick(clickedId) {
+  const target = FEATURES[stateQueue[currentIndex]];
+  answered = true;
+
+  if (clickedId === target.id) {
+    score++;
+    d3.select(`#fp-${clickedId}`).classed('fcorrect', true);
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+    setTimeout(advance, 1200);
+  } else {
+    d3.select(`#fp-${clickedId}`).classed('fincorrect', true);
+    d3.select(`#fp-${target.id}`).classed('frevealed', true);
+    const clickedName = FEATURES.find(f => f.id === clickedId)?.name || '?';
+    recordResult(false, target.name);
+    showFeedback(`✗ That was ${clickedName}. Correct feature shown in blue.`, false);
+    setTimeout(advance, 2600);
+  }
+  updateHeader(true);
 }
 
 function advance() { currentIndex++; loadQuestion(); }
@@ -569,29 +847,24 @@ function advance() { currentIndex++; loadQuestion(); }
 /* ══════════════════════════════════════════════════
    STREAK & GAMIFICATION
 ══════════════════════════════════════════════════ */
-function recordResult(correct, wrongStateName) {
+function recordResult(correct, wrongName) {
   if (correct) {
     streak++;
     bestStreak = Math.max(bestStreak, streak);
     updateStreakDisplay();
-
     const milestone = MILESTONES.find(m => m.streak === streak);
-    if (milestone) {
-      badgesEarned.push(milestone);
-      showToast(milestone);
-    }
+    if (milestone) { badgesEarned.push(milestone); showToast(milestone); }
   } else {
     streak = 0;
     updateStreakDisplay();
-    if (wrongStateName) wrongStates.push(wrongStateName);
+    if (wrongName) wrongItems.push(wrongName);
   }
 }
 
 function updateStreakDisplay() {
   const el = document.getElementById('streak-display');
-  const ct = document.getElementById('streak-count');
   if (streak >= 3) {
-    ct.textContent = streak;
+    document.getElementById('streak-count').textContent = streak;
     el.classList.add('show');
   } else {
     el.classList.remove('show');
@@ -603,64 +876,52 @@ function getCorrectMessage() {
   return msgs[Math.floor(Math.random() * msgs.length)];
 }
 
-/* ── Toast ── */
 let toastTimer = null;
 function showToast(milestone) {
   const toast = document.getElementById('streak-toast');
   document.getElementById('toast-emoji').textContent = milestone.emoji;
   document.getElementById('toast-title').textContent = milestone.title;
   document.getElementById('toast-sub').textContent   = milestone.sub;
-
   toast.className = `toast-in ${milestone.tier}`;
-
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('toast-in');
-  }, 2800);
+  toastTimer = setTimeout(() => toast.classList.remove('toast-in'), 2800);
 }
 
 /* ══════════════════════════════════════════════════
-   SUMMARY / COMPLETE SCREEN
+   SUMMARY SCREEN
 ══════════════════════════════════════════════════ */
 function showComplete() {
   const total = stateQueue.length;
   const pct   = Math.round((score / total) * 100);
+  const trophy = pct === 100 ? '🏆' : pct >= 80 ? '🥇' : pct >= 60 ? '🥈' : '🥉';
 
-  // Trophy & heading
-  const trophy  = pct === 100 ? '🏆' : pct >= 80 ? '🥇' : pct >= 60 ? '🥈' : '🥉';
   document.getElementById('summary-trophy').textContent  = trophy;
   document.getElementById('summary-heading').textContent = 'Quiz Complete!';
+  document.getElementById('ring-number').textContent     = score;
+  document.getElementById('ring-label').textContent      = `/ ${total} correct`;
 
-  // Score ring
-  document.getElementById('ring-number').textContent = score;
-  document.getElementById('ring-label').textContent  = `/ ${total} correct`;
-  const ringFill = document.getElementById('ring-fill');
-  const deg = Math.round((score / total) * 360);
+  // Score ring fill
+  const deg    = Math.round((score / total) * 360);
   const colour = pct === 100 ? '#48bb78' : pct >= 60 ? '#4299e1' : '#f6ad55';
-  ringFill.style.background = `conic-gradient(${colour} ${deg}deg, transparent ${deg}deg)`;
-  ringFill.style.border     = 'none';
-  ringFill.style.borderRadius = '50%';
-  // Hollow out the centre with an inset circle via box-shadow trick
-  ringFill.style.webkitMask = 'radial-gradient(circle, transparent 48%, black 49%)';
-  ringFill.style.mask       = 'radial-gradient(circle, transparent 48%, black 49%)';
+  const rf = document.getElementById('ring-fill');
+  rf.style.background   = `conic-gradient(${colour} ${deg}deg, transparent ${deg}deg)`;
+  rf.style.borderRadius = '50%';
+  rf.style.webkitMask   = 'radial-gradient(circle, transparent 48%, black 49%)';
+  rf.style.mask         = 'radial-gradient(circle, transparent 48%, black 49%)';
 
-  // Performance message
-  const perfMsg = pct === 100 ? "Flawless! A perfect run — you're a geography master! 🌟"
-    : pct >= 80 ? `Excellent! You got ${pct}% — just a handful of states tripped you up.`
+  document.getElementById('perf-msg').textContent =
+    pct === 100 ? "Flawless! A perfect run — you're a geography master! 🌟"
+    : pct >= 80 ? `Excellent! You got ${pct}% — just a few tripped you up.`
     : pct >= 60 ? `Good effort! ${pct}% — you're building a solid mental map.`
     : `${pct}% this time — every quiz gets you closer. Keep it up!`;
-  document.getElementById('perf-msg').textContent = perfMsg;
 
-  // Badges earned — deduplicate and show count if earned more than once
+  // Badges
   const badgesSection = document.getElementById('badges-section');
-  const badgesStrip   = document.getElementById('badges-strip');
   if (badgesEarned.length > 0) {
     badgesSection.style.display = 'block';
-    // Count how many times each milestone was hit
     const counts = {};
     badgesEarned.forEach(b => { counts[b.streak] = (counts[b.streak] || 0) + 1; });
-    // Render in milestone order, each badge once
-    badgesStrip.innerHTML = MILESTONES
+    document.getElementById('badges-strip').innerHTML = MILESTONES
       .filter(m => counts[m.streak])
       .map(b => {
         const n = counts[b.streak];
@@ -671,22 +932,17 @@ function showComplete() {
     badgesSection.style.display = 'none';
   }
 
-  // Wrong states
-  const wrongContent = document.getElementById('wrong-content');
-  const wrongSection = document.getElementById('wrong-section');
-  const wrongHeading = document.getElementById('wrong-heading');
-
-  if (wrongStates.length === 0) {
-    wrongSection.classList.add('perfect');
-    wrongHeading.textContent = 'Missed States';
-    wrongContent.innerHTML = '<div class="wrong-none">🎉 You didn\'t miss a single state — absolutely flawless!</div>';
+  // Missed items
+  const label = currentMode === 3 ? 'Missed Features' : 'Missed States';
+  document.getElementById('wrong-heading').textContent =
+    wrongItems.length > 0 ? `${label} (${wrongItems.length})` : label;
+  if (wrongItems.length === 0) {
+    document.getElementById('wrong-content').innerHTML =
+      `<div class="wrong-none">🎉 You didn't miss a single one — absolutely flawless!</div>`;
   } else {
-    wrongSection.classList.remove('perfect');
-    wrongHeading.textContent = `Missed States (${wrongStates.length})`;
-    const sorted = [...wrongStates].sort();
-    wrongContent.innerHTML = `<div class="wrong-list">${
-      sorted.map(s => `<span class="wrong-chip">${s}</span>`).join('')
-    }</div>`;
+    const sorted = [...wrongItems].sort();
+    document.getElementById('wrong-content').innerHTML =
+      `<div class="wrong-list">${sorted.map(s => `<span class="wrong-chip">${s}</span>`).join('')}</div>`;
   }
 
   show('screen-complete');
@@ -711,8 +967,6 @@ function resetMapClasses() {
     .classed('incorrect', false).classed('revealed', false);
 }
 function updateHeader(justAnswered = false) {
-  // If we just answered the current question, the index hasn't incremented yet —
-  // add 1 so the denominator stays in sync with the score numerator.
   const done  = justAnswered ? currentIndex + 1 : currentIndex;
   const total = stateQueue.length;
   document.getElementById('header-score').textContent  = `Score: ${score} / ${done}`;
@@ -734,7 +988,7 @@ function shuffle(arr) {
 }
 
 /* ══════════════════════════════════════════════════
-   AUTOCOMPLETE
+   AUTOCOMPLETE (Mode 2)
 ══════════════════════════════════════════════════ */
 let acActiveIndex = -1;
 const stateInput = document.getElementById('state-input');
@@ -744,18 +998,15 @@ stateInput.addEventListener('input', () => {
   const q = stateInput.value.trim().toLowerCase();
   acActiveIndex = -1;
   if (!q) { closeDropdown(); return; }
-
   const starts   = STATE_NAMES.filter(s => s.toLowerCase().startsWith(q));
   const contains = STATE_NAMES.filter(s => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
   const results  = [...starts, ...contains].slice(0, 8);
   if (!results.length) { closeDropdown(); return; }
-
   acList.innerHTML = results.map(name =>
     `<div class="ac-item" data-name="${name}">${highlightMatch(name, q)}</div>`
   ).join('');
   acList.classList.add('open');
   stateInput.classList.add('open');
-
   acList.querySelectorAll('.ac-item').forEach(item => {
     item.addEventListener('mousedown', e => {
       e.preventDefault();
@@ -768,42 +1019,25 @@ stateInput.addEventListener('input', () => {
 
 stateInput.addEventListener('keydown', e => {
   const items = acList.querySelectorAll('.ac-item');
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    acActiveIndex = Math.min(acActiveIndex+1, items.length-1);
-    updateAcActive(items);
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    acActiveIndex = Math.max(acActiveIndex-1, -1);
-    updateAcActive(items);
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (acActiveIndex >= 0 && items[acActiveIndex]) {
-      stateInput.value = items[acActiveIndex].dataset.name;
-      closeDropdown();
-    }
-    submitMode2();
-  } else if (e.key === 'Escape') {
-    closeDropdown();
-  }
+  if (e.key === 'ArrowDown') { e.preventDefault(); acActiveIndex = Math.min(acActiveIndex+1, items.length-1); updateAcActive(items); }
+  else if (e.key === 'ArrowUp')  { e.preventDefault(); acActiveIndex = Math.max(acActiveIndex-1, -1); updateAcActive(items); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (acActiveIndex >= 0 && items[acActiveIndex]) { stateInput.value = items[acActiveIndex].dataset.name; closeDropdown(); } submitMode2(); }
+  else if (e.key === 'Escape') { closeDropdown(); }
 });
 
 stateInput.addEventListener('blur', () => setTimeout(closeDropdown, 150));
 
 function updateAcActive(items) {
   items.forEach((el,i) => el.classList.toggle('ac-active', i===acActiveIndex));
-  if (acActiveIndex >= 0 && items[acActiveIndex])
-    items[acActiveIndex].scrollIntoView({ block:'nearest' });
+  if (acActiveIndex >= 0 && items[acActiveIndex]) items[acActiveIndex].scrollIntoView({ block:'nearest' });
 }
 function closeDropdown() {
-  acList.classList.remove('open');
-  stateInput.classList.remove('open');
-  acActiveIndex = -1;
+  acList.classList.remove('open'); stateInput.classList.remove('open'); acActiveIndex = -1;
 }
 function highlightMatch(name, q) {
   const idx = name.toLowerCase().indexOf(q);
   if (idx === -1) return name;
-  return name.slice(0,idx) + `<strong>${name.slice(idx, idx+q.length)}</strong>` + name.slice(idx+q.length);
+  return name.slice(0,idx) + '<strong>' + name.slice(idx, idx+q.length) + '<\/strong>' + name.slice(idx+q.length);
 }
 </script>
 </body>
