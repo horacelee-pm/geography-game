@@ -428,6 +428,11 @@
     <div id="map-loading"><div class="spinner"></div> Loading map…</div>
   </div>
 
+  <!-- Footnote shown only in mode 4 -->
+  <div id="parks-footnote" style="display:none; font-size:0.78rem; color:#718096; text-align:center; padding: 0 0.5rem;">
+    * <strong>2 parks not shown:</strong> National Park of American Samoa and Virgin Islands National Park fall outside the map projection and are excluded from this game.
+  </div>
+
   <!-- Legend shown only in mode 3 -->
   <div id="feature-legend">
     <span class="leg-item"><span class="leg-swatch leg-river"></span> River</span>
@@ -1051,8 +1056,9 @@ function startGame(mode) {
   if (mode === 4) showParkLayer();     else hideParkLayer();
   if (mode === 5) showCapitalLayer();  else hideCapitalLayer();
 
-  // Legend (features only)
-  document.getElementById('feature-legend').style.display = mode === 3 ? 'flex' : 'none';
+  // Legend (features only) + parks footnote
+  document.getElementById('feature-legend').style.display  = mode === 3 ? 'flex'   : 'none';
+  document.getElementById('parks-footnote').style.display  = mode === 4 ? 'block'  : 'none';
 
   updateStreakDisplay();
   show('screen-game');
