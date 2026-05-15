@@ -90,6 +90,44 @@
     #map-container.mode1 .state-path:hover   { fill: #90aece; }
     /* Mode 3: states are reference only — neutral gray so blue features stand out */
     #map-container.mode3 .state-path         { fill: #e0e0e0; pointer-events: none; cursor: default; }
+    /* Mode 4: terrain-green background so green park pins stand out */
+    #map-container.mode4 .state-path         { fill: #dde8d8; pointer-events: none; cursor: default; }
+
+    /* ── Park pins (Mode 4) ── */
+    .park-pin { cursor: pointer; }
+    .park-pin .pin-body {
+      fill: #276749;
+      stroke: white;
+      stroke-width: 1.5;
+      transition: fill 0.15s;
+    }
+    .park-pin .pin-dot  { fill: white; pointer-events: none; }
+    .park-pin:hover .pin-body              { fill: #1c4f37; }
+    .park-pin.pk-correct  .pin-body        { fill: #48bb78; }
+    .park-pin.pk-incorrect .pin-body       { fill: #fc8181; }
+    .park-pin.pk-revealed  .pin-body       { fill: #4299e1; }
+
+    /* Label shown next to the revealed correct pin */
+    .park-label {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      fill: #1a365d;
+      stroke: white;
+      stroke-width: 3;
+      paint-order: stroke fill;
+      pointer-events: none;
+    }
+    .park-label-state {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      fill: #4a5568;
+      stroke: white;
+      stroke-width: 3;
+      paint-order: stroke fill;
+      pointer-events: none;
+    }
 
     /* State colour states */
     .state-path.target   { fill: #f6ad55; }
@@ -334,6 +372,11 @@
       <h2>Find the Feature</h2>
       <p>Rivers, mountain ranges, and lakes are drawn on the map. Click the named feature.</p>
     </div>
+    <div class="mode-card" onclick="startGame(4)">
+      <span class="card-icon">🏕️</span>
+      <h2>Find the National Park</h2>
+      <p>All 61 US national parks are pinned on the map. Click the park that matches the name shown.</p>
+    </div>
   </div>
 </div>
 
@@ -561,6 +604,74 @@ const FEATURES = [
 ];
 
 /* ══════════════════════════════════════════════════
+   NATIONAL PARKS DATA  [longitude, latitude]
+   Excludes American Samoa & Virgin Islands (outside geoAlbersUsa projection)
+══════════════════════════════════════════════════ */
+const NATIONAL_PARKS = [
+  { id:'acadia',              name:'Acadia',                        state:'Maine',          lng:-68.21, lat:44.35 },
+  { id:'arches',              name:'Arches',                        state:'Utah',           lng:-109.57,lat:38.68 },
+  { id:'badlands',            name:'Badlands',                      state:'South Dakota',   lng:-102.50,lat:43.75 },
+  { id:'big-bend',            name:'Big Bend',                      state:'Texas',          lng:-103.25,lat:29.25 },
+  { id:'biscayne',            name:'Biscayne',                      state:'Florida',        lng:-80.43, lat:25.48 },
+  { id:'black-canyon',        name:'Black Canyon of the Gunnison',  state:'Colorado',       lng:-107.72,lat:38.57 },
+  { id:'bryce-canyon',        name:'Bryce Canyon',                  state:'Utah',           lng:-112.18,lat:37.57 },
+  { id:'canyonlands',         name:'Canyonlands',                   state:'Utah',           lng:-109.93,lat:38.20 },
+  { id:'capitol-reef',        name:'Capitol Reef',                  state:'Utah',           lng:-111.17,lat:38.09 },
+  { id:'carlsbad-caverns',    name:'Carlsbad Caverns',              state:'New Mexico',     lng:-104.56,lat:32.15 },
+  { id:'channel-islands',     name:'Channel Islands',               state:'California',     lng:-119.42,lat:34.01 },
+  { id:'congaree',            name:'Congaree',                      state:'South Carolina', lng:-80.78, lat:33.78 },
+  { id:'crater-lake',         name:'Crater Lake',                   state:'Oregon',         lng:-122.10,lat:42.94 },
+  { id:'cuyahoga-valley',     name:'Cuyahoga Valley',               state:'Ohio',           lng:-81.55, lat:41.24 },
+  { id:'death-valley',        name:'Death Valley',                  state:'California',     lng:-116.82,lat:36.24 },
+  { id:'denali',              name:'Denali',                        state:'Alaska',         lng:-150.50,lat:63.33 },
+  { id:'dry-tortugas',        name:'Dry Tortugas',                  state:'Florida',        lng:-82.87, lat:24.63 },
+  { id:'everglades',          name:'Everglades',                    state:'Florida',        lng:-80.90, lat:25.60 },
+  { id:'gates-arctic',        name:'Gates of the Arctic',           state:'Alaska',         lng:-153.30,lat:67.78 },
+  { id:'gateway-arch',        name:'Gateway Arch',                  state:'Missouri',       lng:-90.19, lat:38.63 },
+  { id:'glacier',             name:'Glacier',                       state:'Montana',        lng:-113.72,lat:48.70 },
+  { id:'glacier-bay',         name:'Glacier Bay',                   state:'Alaska',         lng:-136.90,lat:58.65 },
+  { id:'grand-canyon',        name:'Grand Canyon',                  state:'Arizona',        lng:-112.11,lat:36.11 },
+  { id:'grand-teton',         name:'Grand Teton',                   state:'Wyoming',        lng:-110.68,lat:43.79 },
+  { id:'great-basin',         name:'Great Basin',                   state:'Nevada',         lng:-114.30,lat:38.98 },
+  { id:'great-sand-dunes',    name:'Great Sand Dunes',              state:'Colorado',       lng:-105.51,lat:37.73 },
+  { id:'great-smoky',         name:'Great Smoky Mountains',         state:'TN / NC',        lng:-83.53, lat:35.68 },
+  { id:'guadalupe-mountains', name:'Guadalupe Mountains',           state:'Texas',          lng:-104.87,lat:31.92 },
+  { id:'haleakala',           name:'Haleakalā',                     state:'Hawaii',         lng:-156.15,lat:20.72 },
+  { id:'hawaii-volcanoes',    name:'Hawaiʻi Volcanoes',             state:'Hawaii',         lng:-155.19,lat:19.38 },
+  { id:'hot-springs',         name:'Hot Springs',                   state:'Arkansas',       lng:-93.05, lat:34.51 },
+  { id:'indiana-dunes',       name:'Indiana Dunes',                 state:'Indiana',        lng:-87.05, lat:41.65 },
+  { id:'isle-royale',         name:'Isle Royale',                   state:'Michigan',       lng:-88.55, lat:48.10 },
+  { id:'joshua-tree',         name:'Joshua Tree',                   state:'California',     lng:-115.90,lat:33.88 },
+  { id:'katmai',              name:'Katmai',                        state:'Alaska',         lng:-154.00,lat:58.50 },
+  { id:'kenai-fjords',        name:'Kenai Fjords',                  state:'Alaska',         lng:-150.17,lat:59.92 },
+  { id:'kings-canyon',        name:'Kings Canyon',                  state:'California',     lng:-118.55,lat:36.89 },
+  { id:'kobuk-valley',        name:'Kobuk Valley',                  state:'Alaska',         lng:-159.28,lat:67.55 },
+  { id:'lake-clark',          name:'Lake Clark',                    state:'Alaska',         lng:-153.42,lat:60.97 },
+  { id:'lassen-volcanic',     name:'Lassen Volcanic',               state:'California',     lng:-121.51,lat:40.49 },
+  { id:'mammoth-cave',        name:'Mammoth Cave',                  state:'Kentucky',       lng:-86.10, lat:37.19 },
+  { id:'mesa-verde',          name:'Mesa Verde',                    state:'Colorado',       lng:-108.49,lat:37.18 },
+  { id:'mount-rainier',       name:'Mount Rainier',                 state:'Washington',     lng:-121.75,lat:46.85 },
+  { id:'new-river-gorge',     name:'New River Gorge',               state:'West Virginia',  lng:-80.99, lat:37.86 },
+  { id:'north-cascades',      name:'North Cascades',                state:'Washington',     lng:-121.20,lat:48.70 },
+  { id:'olympic',             name:'Olympic',                       state:'Washington',     lng:-123.50,lat:47.80 },
+  { id:'petrified-forest',    name:'Petrified Forest',              state:'Arizona',        lng:-109.78,lat:35.07 },
+  { id:'pinnacles',           name:'Pinnacles',                     state:'California',     lng:-121.20,lat:36.49 },
+  { id:'redwood',             name:'Redwood',                       state:'California',     lng:-124.00,lat:41.30 },
+  { id:'rocky-mountain',      name:'Rocky Mountain',                state:'Colorado',       lng:-105.58,lat:40.40 },
+  { id:'saguaro',             name:'Saguaro',                       state:'Arizona',        lng:-110.50,lat:32.25 },
+  { id:'sequoia',             name:'Sequoia',                       state:'California',     lng:-118.68,lat:36.43 },
+  { id:'shenandoah',          name:'Shenandoah',                    state:'Virginia',       lng:-78.35, lat:38.53 },
+  { id:'theodore-roosevelt',  name:'Theodore Roosevelt',            state:'North Dakota',   lng:-103.45,lat:46.97 },
+  { id:'voyageurs',           name:'Voyageurs',                     state:'Minnesota',      lng:-92.83, lat:48.48 },
+  { id:'white-sands',         name:'White Sands',                   state:'New Mexico',     lng:-106.17,lat:32.78 },
+  { id:'wind-cave',           name:'Wind Cave',                     state:'South Dakota',   lng:-103.48,lat:43.57 },
+  { id:'wrangell-st-elias',   name:'Wrangell-St. Elias',            state:'Alaska',         lng:-142.99,lat:61.71 },
+  { id:'yellowstone',         name:'Yellowstone',                   state:'Wyoming',        lng:-110.50,lat:44.60 },
+  { id:'yosemite',            name:'Yosemite',                      state:'California',     lng:-119.54,lat:37.87 },
+  { id:'zion',                name:'Zion',                          state:'Utah',           lng:-113.05,lat:37.30 }
+];
+
+/* ══════════════════════════════════════════════════
    MILESTONES
 ══════════════════════════════════════════════════ */
 const MILESTONES = [
@@ -584,9 +695,12 @@ let wrongItems    = [];   // wrong state names or feature names
 let badgesEarned  = [];
 let mapLoaded     = false;
 let featuresReady = false;
+let parksReady    = false;
 let svg           = null;
+let projection    = null;
 let geoPath       = null;
 let featuresGroup = null; // SVG group for all geo features
+let parksGroup    = null; // SVG group for national park pins
 
 /* ══════════════════════════════════════════════════
    MAP INIT
@@ -594,8 +708,8 @@ let featuresGroup = null; // SVG group for all geo features
 (async function initMap() {
   try {
     const us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
-    const W = 960, H = 580;
-    const projection = d3.geoAlbersUsa().scale(1280).translate([W/2, H/2]);
+    const W = 960, H = 650;
+    projection = d3.geoAlbersUsa().scale(1280).translate([W/2, H/2]);
     geoPath = d3.geoPath().projection(projection);
 
     svg = d3.select('#map-container')
@@ -622,6 +736,15 @@ let featuresGroup = null; // SVG group for all geo features
       featuresReady = true;
     } catch(fe) {
       console.error('Geographic features failed to initialize:', fe);
+    }
+
+    // Parks layer (always rendered, shown/hidden per mode)
+    parksGroup = svg.append('g').attr('id','parks-layer').style('display','none');
+    try {
+      initParks();
+      parksReady = true;
+    } catch(pe) {
+      console.error('National parks failed to initialize:', pe);
     }
 
     document.getElementById('map-loading').style.display = 'none';
@@ -687,6 +810,53 @@ function resetFeatureClasses() {
 }
 
 /* ══════════════════════════════════════════════════
+   PARK LAYER (Mode 4)
+══════════════════════════════════════════════════ */
+// Classic teardrop map-pin path, tip pointing down
+const PIN_PATH = 'M0,-13 C-7,-13 -11,-7 -11,-2 C-11,5 0,14 0,14 C0,14 11,5 11,-2 C11,-7 7,-13 0,-13 Z';
+
+function initParks() {
+  NATIONAL_PARKS.forEach(park => {
+    const pt = projection([park.lng, park.lat]);
+    if (!pt) return; // outside projection domain
+
+    const g = parksGroup.append('g')
+      .attr('class', 'park-pin')
+      .attr('data-pid', park.id)
+      .attr('transform', `translate(${pt[0]},${pt[1]})`);
+
+    g.append('path')
+      .attr('class', 'pin-body')
+      .attr('d', PIN_PATH);
+
+    g.append('circle')
+      .attr('class', 'pin-dot')
+      .attr('cx', 0).attr('cy', -4).attr('r', 3);
+
+    g.on('click', () => {
+      if (currentMode === 4 && !answered) handleParkClick(park.id);
+    }).on('mouseover', () => {
+      if (currentMode === 4 && !answered) g.classed('pk-hover', true);
+    }).on('mouseout', () => {
+      g.classed('pk-hover', false);
+    });
+  });
+}
+
+function showParkLayer() { if (parksGroup) parksGroup.style('display', null); }
+function hideParkLayer()  { if (parksGroup) parksGroup.style('display', 'none'); }
+
+function resetParkClasses() {
+  if (!parksGroup) return;
+  parksGroup.selectAll('.park-pin')
+    .classed('pk-hover',     false)
+    .classed('pk-correct',   false)
+    .classed('pk-incorrect', false)
+    .classed('pk-revealed',  false);
+  parksGroup.selectAll('.park-label, .park-label-state').remove();
+}
+
+/* ══════════════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════════════ */
 function goHome() {
@@ -694,7 +864,9 @@ function goHome() {
   show('screen-home');
   resetMapClasses();
   resetFeatureClasses();
+  resetParkClasses();
   hideFeatureLayer();
+  hideParkLayer();
 }
 
 function resetGame() { startGame(currentMode); }
@@ -702,6 +874,7 @@ function resetGame() { startGame(currentMode); }
 function startGame(mode) {
   if (!mapLoaded) { alert('Map is still loading — please wait a moment.'); return; }
   if (mode === 3 && !featuresReady) { alert('Geographic features could not be loaded. Please reload the page.'); return; }
+  if (mode === 4 && !parksReady)    { alert('National parks could not be loaded. Please reload the page.'); return; }
   currentMode  = mode;
   currentIndex = 0;
   score        = 0;
@@ -714,6 +887,12 @@ function startGame(mode) {
   // Build queue
   if (mode === 3) {
     stateQueue = shuffle(FEATURES.map((_, i) => i));
+  } else if (mode === 4) {
+    // Only include parks that can actually be projected onto the map
+    const validIds = NATIONAL_PARKS
+      .filter(p => projection([p.lng, p.lat]) !== null)
+      .map(p => p.id);
+    stateQueue = shuffle(validIds);
   } else {
     stateQueue = shuffle(Object.keys(STATES));
   }
@@ -722,11 +901,13 @@ function startGame(mode) {
   const mc = document.getElementById('map-container');
   mc.classList.toggle('mode1', mode === 1);
   mc.classList.toggle('mode3', mode === 3);
+  mc.classList.toggle('mode4', mode === 4);
 
-  // Feature layer visibility
+  // Layer visibility
   if (mode === 3) showFeatureLayer(); else hideFeatureLayer();
+  if (mode === 4) showParkLayer();    else hideParkLayer();
 
-  // Legend
+  // Legend (features only)
   document.getElementById('feature-legend').style.display = mode === 3 ? 'flex' : 'none';
 
   updateStreakDisplay();
@@ -764,10 +945,15 @@ function loadQuestion() {
     setTimeout(() => inp.focus(), 40);
     svg.selectAll(`.state-path[data-fips="${f}"]`).classed('target', true);
 
-  } else { // mode 3
+  } else if (currentMode === 3) {
     const feature = FEATURES[stateQueue[currentIndex]];
     document.getElementById('game-prompt').textContent      = `Find: ${feature.name}`;
     document.getElementById('game-instruction').textContent = 'Click the correct feature on the map';
+
+  } else { // mode 4
+    const park = NATIONAL_PARKS.find(p => p.id === stateQueue[currentIndex]);
+    document.getElementById('game-prompt').textContent      = `Find: ${park.name}`;
+    document.getElementById('game-instruction').textContent = 'Click the correct park pin on the map';
   }
 }
 
@@ -837,6 +1023,36 @@ function handleFeatureClick(clickedId) {
     const clickedName = FEATURES.find(f => f.id === clickedId)?.name || '?';
     recordResult(false, target.name);
     showFeedback(`✗ That was ${clickedName}. Correct feature shown in blue.`, false);
+    setTimeout(advance, 2600);
+  }
+  updateHeader(true);
+}
+
+/* ── Mode 4 ── */
+function handleParkClick(clickedId) {
+  const targetId = stateQueue[currentIndex];
+  answered = true;
+
+  if (clickedId === targetId) {
+    score++;
+    const correctPin = parksGroup.select(`.park-pin[data-pid="${clickedId}"]`).classed('pk-correct', true);
+    const correctPark = NATIONAL_PARKS.find(p => p.id === clickedId);
+    correctPin.append('text').attr('class','park-label').attr('x', 14).attr('y', -4).text(correctPark.name);
+    correctPin.append('text').attr('class','park-label-state').attr('x', 14).attr('y', 8).text(correctPark.state);
+    correctPin.raise();
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+    setTimeout(advance, 1200);
+  } else {
+    parksGroup.select(`.park-pin[data-pid="${clickedId}"]`).classed('pk-incorrect', true);
+    const revealedPin = parksGroup.select(`.park-pin[data-pid="${targetId}"]`).classed('pk-revealed', true);
+    const clickedName = NATIONAL_PARKS.find(p => p.id === clickedId)?.name || '?';
+    const targetPark  = NATIONAL_PARKS.find(p => p.id === targetId);
+    revealedPin.append('text').attr('class','park-label').attr('x', 14).attr('y', -4).text(targetPark.name);
+    revealedPin.append('text').attr('class','park-label-state').attr('x', 14).attr('y', 8).text(targetPark.state);
+    revealedPin.raise();
+    recordResult(false, targetPark.name);
+    showFeedback(`✗ That was ${clickedName}. Correct park shown in blue.`, false);
     setTimeout(advance, 2600);
   }
   updateHeader(true);
@@ -933,7 +1149,9 @@ function showComplete() {
   }
 
   // Missed items
-  const label = currentMode === 3 ? 'Missed Features' : 'Missed States';
+  const label = currentMode === 3 ? 'Missed Features'
+              : currentMode === 4 ? 'Missed Parks'
+              : 'Missed States';
   document.getElementById('wrong-heading').textContent =
     wrongItems.length > 0 ? `${label} (${wrongItems.length})` : label;
   if (wrongItems.length === 0) {
@@ -965,6 +1183,7 @@ function resetMapClasses() {
   svg.selectAll('.state-path')
     .classed('target', false).classed('correct', false)
     .classed('incorrect', false).classed('revealed', false);
+  resetParkClasses();
 }
 function updateHeader(justAnswered = false) {
   const done  = justAnswered ? currentIndex + 1 : currentIndex;
