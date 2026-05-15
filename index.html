@@ -107,6 +107,28 @@
     .park-pin.pk-incorrect .pin-body       { fill: #fc8181; }
     .park-pin.pk-revealed  .pin-body       { fill: #4299e1; }
 
+    /* ── Capital stars (Mode 5) ── */
+    .cap-star .star-body {
+      fill: #6b46c1;
+      stroke: white;
+      stroke-width: 1.5;
+      transition: fill 0.15s;
+    }
+    .cap-star.cap-correct  .star-body { fill: #48bb78; }
+    .cap-star.cap-revealed .star-body { fill: #4299e1; }
+    /* Label shown next to the answered capital star */
+    .cap-label {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      fill: #1a365d;
+      stroke: white;
+      stroke-width: 3;
+      paint-order: stroke fill;
+      pointer-events: none;
+    }
+    /* Mode 5: same state fill rules as mode 2 (target/correct/incorrect already defined) */
+
     /* Label shown next to the revealed correct pin */
     .park-label {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -366,6 +388,11 @@
       <span class="card-icon">⌨️</span>
       <h2>Name the State</h2>
       <p>A state is highlighted in orange. Type its name to answer.</p>
+    </div>
+    <div class="mode-card" onclick="startGame(5)">
+      <span class="card-icon">⭐</span>
+      <h2>State Capitals</h2>
+      <p>A state is highlighted and its capital is marked on the map. Type the capital city name.</p>
     </div>
     <div class="mode-card" onclick="startGame(3)">
       <span class="card-icon">🏔️</span>
@@ -672,6 +699,63 @@ const NATIONAL_PARKS = [
 ];
 
 /* ══════════════════════════════════════════════════
+   STATE CAPITALS DATA  { city, lat, lng }  keyed by FIPS
+══════════════════════════════════════════════════ */
+const CAPITALS = {
+  "01":{ city:"Montgomery",    lat:32.361, lng:-86.279  },
+  "02":{ city:"Juneau",        lat:58.301, lng:-134.420 },
+  "04":{ city:"Phoenix",       lat:33.448, lng:-112.074 },
+  "05":{ city:"Little Rock",   lat:34.746, lng:-92.290  },
+  "06":{ city:"Sacramento",    lat:38.582, lng:-121.494 },
+  "08":{ city:"Denver",        lat:39.739, lng:-104.990 },
+  "09":{ city:"Hartford",      lat:41.766, lng:-72.685  },
+  "10":{ city:"Dover",         lat:39.158, lng:-75.524  },
+  "12":{ city:"Tallahassee",   lat:30.438, lng:-84.281  },
+  "13":{ city:"Atlanta",       lat:33.749, lng:-84.388  },
+  "15":{ city:"Honolulu",      lat:21.307, lng:-157.858 },
+  "16":{ city:"Boise",         lat:43.615, lng:-116.202 },
+  "17":{ city:"Springfield",   lat:39.782, lng:-89.650  },
+  "18":{ city:"Indianapolis",  lat:39.768, lng:-86.158  },
+  "19":{ city:"Des Moines",    lat:41.587, lng:-93.625  },
+  "20":{ city:"Topeka",        lat:39.047, lng:-95.675  },
+  "21":{ city:"Frankfort",     lat:38.201, lng:-84.873  },
+  "22":{ city:"Baton Rouge",   lat:30.452, lng:-91.187  },
+  "23":{ city:"Augusta",       lat:44.311, lng:-69.780  },
+  "24":{ city:"Annapolis",     lat:38.978, lng:-76.492  },
+  "25":{ city:"Boston",        lat:42.360, lng:-71.059  },
+  "26":{ city:"Lansing",       lat:42.733, lng:-84.556  },
+  "27":{ city:"Saint Paul",    lat:44.954, lng:-93.090  },
+  "28":{ city:"Jackson",       lat:32.299, lng:-90.185  },
+  "29":{ city:"Jefferson City",lat:38.577, lng:-92.174  },
+  "30":{ city:"Helena",        lat:46.596, lng:-112.027 },
+  "31":{ city:"Lincoln",       lat:40.814, lng:-96.703  },
+  "32":{ city:"Carson City",   lat:39.164, lng:-119.767 },
+  "33":{ city:"Concord",       lat:43.208, lng:-71.538  },
+  "34":{ city:"Trenton",       lat:40.217, lng:-74.743  },
+  "35":{ city:"Santa Fe",      lat:35.687, lng:-105.938 },
+  "36":{ city:"Albany",        lat:42.653, lng:-73.756  },
+  "37":{ city:"Raleigh",       lat:35.780, lng:-78.638  },
+  "38":{ city:"Bismarck",      lat:46.808, lng:-100.784 },
+  "39":{ city:"Columbus",      lat:39.961, lng:-82.999  },
+  "40":{ city:"Oklahoma City", lat:35.468, lng:-97.516  },
+  "41":{ city:"Salem",         lat:44.943, lng:-123.035 },
+  "42":{ city:"Harrisburg",    lat:40.273, lng:-76.887  },
+  "44":{ city:"Providence",    lat:41.824, lng:-71.413  },
+  "45":{ city:"Columbia",      lat:34.001, lng:-81.035  },
+  "46":{ city:"Pierre",        lat:44.368, lng:-100.351 },
+  "47":{ city:"Nashville",     lat:36.163, lng:-86.782  },
+  "48":{ city:"Austin",        lat:30.267, lng:-97.743  },
+  "49":{ city:"Salt Lake City",lat:40.761, lng:-111.891 },
+  "50":{ city:"Montpelier",    lat:44.260, lng:-72.575  },
+  "51":{ city:"Richmond",      lat:37.541, lng:-77.436  },
+  "53":{ city:"Olympia",       lat:47.038, lng:-122.901 },
+  "54":{ city:"Charleston",    lat:38.350, lng:-81.633  },
+  "55":{ city:"Madison",       lat:43.073, lng:-89.401  },
+  "56":{ city:"Cheyenne",      lat:41.140, lng:-104.820 }
+};
+const CAPITAL_NAMES = Object.values(CAPITALS).map(c => c.city).sort((a,b) => a.localeCompare(b));
+
+/* ══════════════════════════════════════════════════
    MILESTONES
 ══════════════════════════════════════════════════ */
 const MILESTONES = [
@@ -695,12 +779,14 @@ let wrongItems    = [];   // wrong state names or feature names
 let badgesEarned  = [];
 let mapLoaded     = false;
 let featuresReady = false;
-let parksReady    = false;
-let svg           = null;
-let projection    = null;
-let geoPath       = null;
-let featuresGroup = null; // SVG group for all geo features
-let parksGroup    = null; // SVG group for national park pins
+let parksReady      = false;
+let capitalsReady   = false;
+let svg             = null;
+let projection      = null;
+let geoPath         = null;
+let featuresGroup   = null; // SVG group for all geo features
+let parksGroup      = null; // SVG group for national park pins
+let capitalsGroup   = null; // SVG group for state capital stars
 
 /* ══════════════════════════════════════════════════
    MAP INIT
@@ -745,6 +831,15 @@ let parksGroup    = null; // SVG group for national park pins
       parksReady = true;
     } catch(pe) {
       console.error('National parks failed to initialize:', pe);
+    }
+
+    // Capitals layer (shown only in mode 5; individual stars hidden until their question)
+    capitalsGroup = svg.append('g').attr('id','capitals-layer').style('display','none');
+    try {
+      initCapitals();
+      capitalsReady = true;
+    } catch(ce) {
+      console.error('Capitals failed to initialize:', ce);
     }
 
     document.getElementById('map-loading').style.display = 'none';
@@ -857,6 +952,51 @@ function resetParkClasses() {
 }
 
 /* ══════════════════════════════════════════════════
+   CAPITALS LAYER (Mode 5)
+══════════════════════════════════════════════════ */
+// 5-pointed star, outer r=8, inner r=3.5, tip pointing up
+const STAR_PATH = 'M0,-8 L2.06,-2.83 L7.61,-2.47 L3.33,1.08 L4.70,6.47 L0,3.5 L-4.70,6.47 L-3.33,1.08 L-7.61,-2.47 L-2.06,-2.83 Z';
+
+function initCapitals() {
+  Object.entries(CAPITALS).forEach(([fips, cap]) => {
+    const pt = projection([cap.lng, cap.lat]);
+    if (!pt) return;
+
+    const g = capitalsGroup.append('g')
+      .attr('class', 'cap-star')
+      .attr('data-fips', fips)
+      .attr('transform', `translate(${pt[0]},${pt[1]})`)
+      .style('display', 'none'); // hidden until question makes it active
+
+    g.append('path')
+      .attr('class', 'star-body')
+      .attr('d', STAR_PATH);
+  });
+}
+
+function showCapitalLayer()  { if (capitalsGroup) capitalsGroup.style('display', null); }
+function hideCapitalLayer()  { if (capitalsGroup) capitalsGroup.style('display', 'none'); }
+
+function showCapitalStar(fips) {
+  if (!capitalsGroup) return;
+  // hide all first, then show the requested one
+  capitalsGroup.selectAll('.cap-star').style('display', 'none');
+  capitalsGroup.select(`.cap-star[data-fips="${fips}"]`)
+    .classed('cap-active', true)
+    .style('display', null);
+}
+
+function resetCapitalClasses() {
+  if (!capitalsGroup) return;
+  capitalsGroup.selectAll('.cap-star')
+    .classed('cap-active',   false)
+    .classed('cap-correct',  false)
+    .classed('cap-revealed', false)
+    .style('display', 'none');
+  capitalsGroup.selectAll('.cap-label').remove();
+}
+
+/* ══════════════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════════════ */
 function goHome() {
@@ -865,8 +1005,10 @@ function goHome() {
   resetMapClasses();
   resetFeatureClasses();
   resetParkClasses();
+  resetCapitalClasses();
   hideFeatureLayer();
   hideParkLayer();
+  hideCapitalLayer();
 }
 
 function resetGame() { startGame(currentMode); }
@@ -874,7 +1016,8 @@ function resetGame() { startGame(currentMode); }
 function startGame(mode) {
   if (!mapLoaded) { alert('Map is still loading — please wait a moment.'); return; }
   if (mode === 3 && !featuresReady) { alert('Geographic features could not be loaded. Please reload the page.'); return; }
-  if (mode === 4 && !parksReady)    { alert('National parks could not be loaded. Please reload the page.'); return; }
+  if (mode === 4 && !parksReady)      { alert('National parks could not be loaded. Please reload the page.'); return; }
+  if (mode === 5 && !capitalsReady)   { alert('Capitals could not be loaded. Please reload the page.'); return; }
   currentMode  = mode;
   currentIndex = 0;
   score        = 0;
@@ -904,8 +1047,9 @@ function startGame(mode) {
   mc.classList.toggle('mode4', mode === 4);
 
   // Layer visibility
-  if (mode === 3) showFeatureLayer(); else hideFeatureLayer();
-  if (mode === 4) showParkLayer();    else hideParkLayer();
+  if (mode === 3) showFeatureLayer();  else hideFeatureLayer();
+  if (mode === 4) showParkLayer();     else hideParkLayer();
+  if (mode === 5) showCapitalLayer();  else hideCapitalLayer();
 
   // Legend (features only)
   document.getElementById('feature-legend').style.display = mode === 3 ? 'flex' : 'none';
@@ -924,6 +1068,7 @@ function loadQuestion() {
   answered = false;
   resetMapClasses();
   resetFeatureClasses();
+  resetCapitalClasses();
   hideFeedback();
   updateHeader();
 
@@ -939,6 +1084,7 @@ function loadQuestion() {
     document.getElementById('game-prompt').textContent      = 'What state is this?';
     document.getElementById('game-instruction').textContent = 'Type the state name below and select or press Submit';
     document.getElementById('mode2-area').style.display     = 'flex';
+    document.getElementById('state-input').placeholder      = 'Type state name…';
     const inp = document.getElementById('state-input');
     inp.value = ''; inp.disabled = false;
     closeDropdown();
@@ -950,10 +1096,24 @@ function loadQuestion() {
     document.getElementById('game-prompt').textContent      = `Find: ${feature.name}`;
     document.getElementById('game-instruction').textContent = 'Click the correct feature on the map';
 
-  } else { // mode 4
+  } else if (currentMode === 4) {
     const park = NATIONAL_PARKS.find(p => p.id === stateQueue[currentIndex]);
     document.getElementById('game-prompt').textContent      = `Find: ${park.name}`;
     document.getElementById('game-instruction').textContent = 'Click the correct park pin on the map';
+
+  } else { // mode 5
+    const fips = stateQueue[currentIndex];
+    const stateName = STATES[fips];
+    document.getElementById('game-prompt').textContent      = `Capital of: ${stateName}`;
+    document.getElementById('game-instruction').textContent = 'The ★ marks the capital — type its name below';
+    document.getElementById('mode2-area').style.display     = 'flex';
+    document.getElementById('state-input').placeholder      = 'Type capital city name…';
+    const inp = document.getElementById('state-input');
+    inp.value = ''; inp.disabled = false;
+    closeDropdown();
+    setTimeout(() => inp.focus(), 40);
+    svg.selectAll(`.state-path[data-fips="${fips}"]`).classed('target', true);
+    showCapitalStar(fips);
   }
 }
 
@@ -981,6 +1141,7 @@ function handleMode1Click(clickedFips) {
 /* ── Mode 2 ── */
 function submitMode2() {
   if (answered) return;
+  if (currentMode === 5) { submitMode5(); return; }
   closeDropdown();
   const input = document.getElementById('state-input').value.trim();
   if (!input) return;
@@ -1001,6 +1162,42 @@ function submitMode2() {
     svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('target', false).classed('incorrect', true);
     recordResult(false, targetName);
     showFeedback(`✗ Incorrect — the answer was "${targetName}".`, false);
+    setTimeout(advance, 2200);
+  }
+  updateHeader(true);
+}
+
+/* ── Mode 5 ── */
+function submitMode5() {
+  closeDropdown();
+  const input = document.getElementById('state-input').value.trim();
+  if (!input) return;
+
+  const fips      = stateQueue[currentIndex];
+  const capital   = CAPITALS[fips];
+  const stateName = STATES[fips];
+  answered = true;
+  document.getElementById('state-input').disabled = true;
+
+  const capStar   = capitalsGroup.select(`.cap-star[data-fips="${fips}"]`);
+  const isCorrect = input.toLowerCase() === capital.city.toLowerCase();
+
+  // Append label to the star, then raise it above other elements
+  capStar.append('text').attr('class','cap-label').attr('x', 12).attr('y', 3).text(capital.city);
+  capStar.raise();
+
+  if (isCorrect) {
+    score++;
+    svg.selectAll(`.state-path[data-fips="${fips}"]`).classed('target', false).classed('correct', true);
+    capStar.classed('cap-active', false).classed('cap-correct', true);
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+    setTimeout(advance, 1200);
+  } else {
+    svg.selectAll(`.state-path[data-fips="${fips}"]`).classed('target', false).classed('incorrect', true);
+    capStar.classed('cap-active', false).classed('cap-revealed', true);
+    recordResult(false, capital.city);
+    showFeedback(`✗ Incorrect — the capital of ${stateName} is "${capital.city}".`, false);
     setTimeout(advance, 2200);
   }
   updateHeader(true);
@@ -1151,6 +1348,7 @@ function showComplete() {
   // Missed items
   const label = currentMode === 3 ? 'Missed Features'
               : currentMode === 4 ? 'Missed Parks'
+              : currentMode === 5 ? 'Missed Capitals'
               : 'Missed States';
   document.getElementById('wrong-heading').textContent =
     wrongItems.length > 0 ? `${label} (${wrongItems.length})` : label;
@@ -1217,8 +1415,9 @@ stateInput.addEventListener('input', () => {
   const q = stateInput.value.trim().toLowerCase();
   acActiveIndex = -1;
   if (!q) { closeDropdown(); return; }
-  const starts   = STATE_NAMES.filter(s => s.toLowerCase().startsWith(q));
-  const contains = STATE_NAMES.filter(s => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
+  const nameList = (currentMode === 5) ? CAPITAL_NAMES : STATE_NAMES;
+  const starts   = nameList.filter(s => s.toLowerCase().startsWith(q));
+  const contains = nameList.filter(s => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
   const results  = [...starts, ...contains].slice(0, 8);
   if (!results.length) { closeDropdown(); return; }
   acList.innerHTML = results.map(name =>
