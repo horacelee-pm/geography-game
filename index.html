@@ -154,6 +154,7 @@
       padding: 0.32rem 0.72rem; border-radius: 20px; font-size: 0.84rem; font-weight: 600;
       cursor: pointer; border: 2px solid #e2e8f0; background: #f7fafc; color: #4a5568;
       transition: all 0.15s; user-select: none;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
     .state-chip:hover:not(.chip-submitted) { border-color: #90cdf4; background: #ebf8ff; color: #2b6cb0; }
     .state-chip.chip-selected  { border-color: #4299e1; background: #4299e1; color: white; }
@@ -161,14 +162,17 @@
     .state-chip.chip-incorrect { border-color: #e53e3e; background: #fc8181; color: white; cursor: default; }
     .state-chip.chip-missed    { border-color: #c05621; background: #f6ad55; color: white; cursor: default; }
     .chip-submitted { pointer-events: none; }
-    #mode6-submit {
-      display: block; margin: 1.1rem auto 0;
+    #mode6-submit, #mode6-clear {
       padding: 0.65rem 2rem; font-size: 0.98rem; font-weight: 700;
-      background: #4299e1; color: white; border: none; border-radius: 10px;
-      cursor: pointer; transition: background 0.18s;
+      border: none; border-radius: 10px; cursor: pointer; transition: background 0.18s;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
+    #mode6-submit { background: #4299e1; color: white; }
     #mode6-submit:hover:not(:disabled) { background: #3182ce; }
     #mode6-submit:disabled { background: #a0aec0; cursor: default; }
+    #mode6-clear { background: #edf2f7; color: #4a5568; border: 2px solid #e2e8f0; }
+    #mode6-clear:hover:not(:disabled) { background: #e2e8f0; }
+    #mode6-clear:disabled { opacity: 0.45; cursor: default; }
 
     /* Label shown next to the revealed correct pin */
     .park-label {
@@ -498,7 +502,7 @@
   <div id="mode6-area">
     <div id="silhouette-wrap">
       <svg id="silhouette-svg"></svg>
-      <div class="silhouette-label">Recognize the state from its shape</div>
+      <div class="silhouette-label"></div>
     </div>
     <div id="chip-section">
       <div id="chip-header">
@@ -506,7 +510,10 @@
         <div id="chip-counter">0 selected</div>
       </div>
       <div id="chip-grid"></div>
-      <button id="mode6-submit" onclick="submitMode6()">Submit</button>
+      <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1.1rem;">
+        <button id="mode6-clear"  onclick="clearChips()">Clear</button>
+        <button id="mode6-submit" onclick="submitMode6()">Submit</button>
+      </div>
     </div>
   </div>
 
@@ -1279,15 +1286,15 @@ function handleMode1Click(clickedFips) {
     svg.selectAll(`.state-path[data-fips="${clickedFips}"]`).classed('correct', true);
     recordResult(true);
     showFeedback(getCorrectMessage(), true);
-    setTimeout(advance, 1200);
   } else {
     svg.selectAll(`.state-path[data-fips="${clickedFips}"]`).classed('incorrect', true);
     svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('revealed', true);
     recordResult(false, STATES[targetFips]);
     showFeedback(`✗ That was ${STATES[clickedFips] || '?'}. Correct state shown in blue.`, false);
-    setTimeout(advance, 2600);
   }
   updateHeader(true);
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
 }
 
 /* ── Mode 2 ── */
@@ -1309,14 +1316,14 @@ function submitMode2() {
     svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('target', false).classed('correct', true);
     recordResult(true);
     showFeedback(getCorrectMessage(), true);
-    setTimeout(advance, 1200);
   } else {
     svg.selectAll(`.state-path[data-fips="${targetFips}"]`).classed('target', false).classed('incorrect', true);
     recordResult(false, targetName);
     showFeedback(`✗ Incorrect — the answer was "${targetName}".`, false);
-    setTimeout(advance, 2200);
   }
   updateHeader(true);
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
 }
 
 /* ── Mode 5 ── */
@@ -1344,15 +1351,15 @@ function submitMode5() {
     capStar.classed('cap-active', false).classed('cap-correct', true);
     recordResult(true);
     showFeedback(getCorrectMessage(), true);
-    setTimeout(advance, 1200);
   } else {
     svg.selectAll(`.state-path[data-fips="${fips}"]`).classed('target', false).classed('incorrect', true);
     capStar.classed('cap-active', false).classed('cap-revealed', true);
     recordResult(false, capital.city);
     showFeedback(`✗ Incorrect — the capital of ${stateName} is "${capital.city}".`, false);
-    setTimeout(advance, 2200);
   }
   updateHeader(true);
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
 }
 
 /* ── Mode 3 ── */
@@ -1365,16 +1372,16 @@ function handleFeatureClick(clickedId) {
     d3.select(`#fp-${clickedId}`).classed('fcorrect', true);
     recordResult(true);
     showFeedback(getCorrectMessage(), true);
-    setTimeout(advance, 1200);
   } else {
     d3.select(`#fp-${clickedId}`).classed('fincorrect', true);
     d3.select(`#fp-${target.id}`).classed('frevealed', true);
     const clickedName = FEATURES.find(f => f.id === clickedId)?.name || '?';
     recordResult(false, target.name);
     showFeedback(`✗ That was ${clickedName}. Correct feature shown in blue.`, false);
-    setTimeout(advance, 2600);
   }
   updateHeader(true);
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
 }
 
 /* ── Mode 4 ── */
@@ -1430,7 +1437,7 @@ function renderSilhouette(fips) {
     .attr('stroke', 'white')
     .attr('stroke-width', 2);
 
-  document.querySelector('.silhouette-label').textContent = 'Recognize the state from its shape';
+  document.querySelector('.silhouette-label').textContent = '';
 }
 
 function renderBorderMap(fips, correctBorders, selectedSnap) {
@@ -1519,7 +1526,8 @@ function buildChipGrid(currentFips) {
     chip.className = 'state-chip';
     chip.dataset.fips = f;
     chip.textContent = STATES[f];
-    chip.addEventListener('click', () => {
+    chip.addEventListener('pointerdown', e => {
+      e.preventDefault(); // prevent subsequent click/touch events firing too
       if (answered) return;
       if (mode6Selected.has(f)) {
         mode6Selected.delete(f);
@@ -1538,6 +1546,15 @@ function updateChipCounter() {
   const n = mode6Selected.size;
   document.getElementById('chip-counter').textContent =
     n === 0 ? '0 selected' : `${n} state${n !== 1 ? 's' : ''} selected`;
+}
+
+function clearChips() {
+  if (answered) return;
+  mode6Selected.clear();
+  document.querySelectorAll('#chip-grid .state-chip').forEach(chip => {
+    chip.classList.remove('chip-selected');
+  });
+  updateChipCounter();
 }
 
 function submitMode6() {
@@ -1570,6 +1587,7 @@ function submitMode6() {
   mode6TotalCorrect += correct;
   mode6TotalBorders += total;
   document.getElementById('mode6-submit').disabled = true;
+  document.getElementById('mode6-clear').disabled  = true;
 
   // Show the border context map — silhouette becomes a color-coded mini-map
   renderBorderMap(fips, correctBorders, new Set(mode6Selected));
