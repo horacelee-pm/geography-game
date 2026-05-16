@@ -129,6 +129,47 @@
     }
     /* Mode 5: same state fill rules as mode 2 (target/correct/incorrect already defined) */
 
+    /* ── Mode 6: Border States ── */
+    #mode6-area {
+      display: none; flex-direction: column; align-items: center; gap: 1.25rem; width: 100%;
+    }
+    #silhouette-wrap {
+      background: white; border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+      padding: 1.25rem; width: 100%; max-width: 420px;
+      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+    }
+    #silhouette-svg { width: 100%; max-width: 360px; height: 220px; }
+    .silhouette-label { font-size: 0.78rem; color: #718096; font-weight: 600; text-align: center; }
+    #chip-section {
+      background: white; border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+      padding: 1.25rem 1.5rem; width: 100%;
+    }
+    #chip-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.4rem; }
+    #chip-instruction { font-size: 0.88rem; color: #718096; }
+    #chip-counter { font-size: 0.88rem; font-weight: 700; color: #4299e1; white-space: nowrap; }
+    #chip-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: flex-start; }
+    .state-chip {
+      padding: 0.32rem 0.72rem; border-radius: 20px; font-size: 0.84rem; font-weight: 600;
+      cursor: pointer; border: 2px solid #e2e8f0; background: #f7fafc; color: #4a5568;
+      transition: all 0.15s; user-select: none;
+    }
+    .state-chip:hover:not(.chip-submitted) { border-color: #90cdf4; background: #ebf8ff; color: #2b6cb0; }
+    .state-chip.chip-selected  { border-color: #4299e1; background: #4299e1; color: white; }
+    .state-chip.chip-correct   { border-color: #38a169; background: #48bb78; color: white; cursor: default; }
+    .state-chip.chip-incorrect { border-color: #e53e3e; background: #fc8181; color: white; cursor: default; }
+    .state-chip.chip-missed    { border-color: #c05621; background: #f6ad55; color: white; cursor: default; }
+    .chip-submitted { pointer-events: none; }
+    #mode6-submit {
+      display: block; margin: 1.1rem auto 0;
+      padding: 0.65rem 2rem; font-size: 0.98rem; font-weight: 700;
+      background: #4299e1; color: white; border: none; border-radius: 10px;
+      cursor: pointer; transition: background 0.18s;
+    }
+    #mode6-submit:hover:not(:disabled) { background: #3182ce; }
+    #mode6-submit:disabled { background: #a0aec0; cursor: default; }
+
     /* Label shown next to the revealed correct pin */
     .park-label {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -404,6 +445,11 @@
       <h2>Find the National Park</h2>
       <p>US national parks are pinned on the map. Click the park that matches the name shown.</p>
     </div>
+    <div class="mode-card" onclick="startGame(6)">
+      <span class="card-icon">🧩</span>
+      <h2>Border States</h2>
+      <p>A state silhouette is shown — select all the states that share a border with it.</p>
+    </div>
   </div>
 </div>
 
@@ -446,6 +492,22 @@
       <div id="autocomplete-list"></div>
     </div>
     <button class="submit-btn" onclick="submitMode2()">Submit</button>
+  </div>
+
+  <!-- Mode 6: Border States (replaces map, shown only in mode 6) -->
+  <div id="mode6-area">
+    <div id="silhouette-wrap">
+      <svg id="silhouette-svg"></svg>
+      <div class="silhouette-label">Recognize the state from its shape</div>
+    </div>
+    <div id="chip-section">
+      <div id="chip-header">
+        <div id="chip-instruction">Select all bordering states, then click Submit</div>
+        <div id="chip-counter">0 selected</div>
+      </div>
+      <div id="chip-grid"></div>
+      <button id="mode6-submit" onclick="submitMode6()">Submit</button>
+    </div>
   </div>
 
   <div id="feedback"></div>
@@ -761,6 +823,61 @@ const CAPITALS = {
 const CAPITAL_NAMES = Object.values(CAPITALS).map(c => c.city).sort((a,b) => a.localeCompare(b));
 
 /* ══════════════════════════════════════════════════
+   STATE BORDERS  FIPS → [neighbouring FIPS ...]
+   Alaska (02) and Hawaii (15) excluded (no US borders)
+══════════════════════════════════════════════════ */
+const BORDERS = {
+  "01":["12","13","28","47"],                      // Alabama
+  "04":["06","08","32","35","49"],                  // Arizona
+  "05":["22","28","29","40","47","48"],             // Arkansas
+  "06":["04","32","41"],                            // California
+  "08":["04","20","31","35","40","49","56"],         // Colorado
+  "09":["25","36","44"],                            // Connecticut
+  "10":["24","34","42"],                            // Delaware
+  "12":["01","13"],                                 // Florida
+  "13":["01","12","37","45","47"],                  // Georgia
+  "16":["30","32","41","49","53","56"],              // Idaho
+  "17":["18","19","21","29","55"],                  // Illinois
+  "18":["17","21","26","39"],                       // Indiana
+  "19":["17","27","29","31","46","55"],              // Iowa
+  "20":["08","29","31","40"],                       // Kansas
+  "21":["17","18","29","39","47","51","54"],         // Kentucky
+  "22":["05","28","48"],                            // Louisiana
+  "23":["33"],                                      // Maine
+  "24":["10","42","51","54"],                       // Maryland
+  "25":["09","33","36","44","50"],                  // Massachusetts
+  "26":["18","39","55"],                            // Michigan
+  "27":["19","38","46","55"],                       // Minnesota
+  "28":["01","05","22","47"],                       // Mississippi
+  "29":["05","17","19","20","21","31","40","47"],    // Missouri
+  "30":["16","38","46","56"],                       // Montana
+  "31":["08","19","20","29","46","56"],              // Nebraska
+  "32":["04","06","16","41","49"],                  // Nevada
+  "33":["23","25","50"],                            // New Hampshire
+  "34":["10","36","42"],                            // New Jersey
+  "35":["04","08","40","48","49"],                  // New Mexico
+  "36":["09","25","34","42","50"],                  // New York
+  "37":["13","45","47","51"],                       // North Carolina
+  "38":["27","30","46"],                            // North Dakota
+  "39":["18","21","26","42","54"],                  // Ohio
+  "40":["05","08","20","29","35","48"],              // Oklahoma
+  "41":["06","16","32","53"],                       // Oregon
+  "42":["10","24","34","36","39","54"],              // Pennsylvania
+  "44":["09","25"],                                 // Rhode Island
+  "45":["13","37"],                                 // South Carolina
+  "46":["19","27","30","31","38","56"],              // South Dakota
+  "47":["01","05","13","21","28","29","37","51"],    // Tennessee
+  "48":["05","22","35","40"],                       // Texas
+  "49":["04","08","16","32","35","56"],              // Utah
+  "50":["25","33","36"],                            // Vermont
+  "51":["21","24","37","47","54"],                  // Virginia
+  "53":["16","41"],                                 // Washington
+  "54":["21","24","39","42","51"],                  // West Virginia
+  "55":["17","19","26","27"],                       // Wisconsin
+  "56":["08","16","30","31","46","49"]               // Wyoming
+};
+
+/* ══════════════════════════════════════════════════
    MILESTONES
 ══════════════════════════════════════════════════ */
 const MILESTONES = [
@@ -792,6 +909,10 @@ let geoPath         = null;
 let featuresGroup   = null; // SVG group for all geo features
 let parksGroup      = null; // SVG group for national park pins
 let capitalsGroup   = null; // SVG group for state capital stars
+let usAtlas           = null; // saved TopoJSON for mode 6 silhouette rendering
+let mode6Selected     = new Set();
+let mode6TotalCorrect = 0;
+let mode6TotalBorders = 0;
 
 /* ══════════════════════════════════════════════════
    MAP INIT
@@ -799,6 +920,7 @@ let capitalsGroup   = null; // SVG group for state capital stars
 (async function initMap() {
   try {
     const us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+    usAtlas = us; // saved for mode 6 silhouette rendering
     const W = 960, H = 650;
     projection = d3.geoAlbersUsa().scale(1280).translate([W/2, H/2]);
     geoPath = d3.geoPath().projection(projection);
@@ -1005,7 +1127,10 @@ function resetCapitalClasses() {
    NAVIGATION
 ══════════════════════════════════════════════════ */
 function goHome() {
+  document.removeEventListener('click', advance);
   closeDropdown();
+  document.getElementById('mode6-area').style.display    = 'none';
+  document.getElementById('map-container').style.display = '';
   show('screen-home');
   resetMapClasses();
   resetFeatureClasses();
@@ -1041,6 +1166,12 @@ function startGame(mode) {
       .filter(p => projection([p.lng, p.lat]) !== null)
       .map(p => p.id);
     stateQueue = shuffle(validIds);
+  } else if (mode === 6) {
+    // Exclude Alaska (02) and Hawaii (15) — no continental borders
+    stateQueue        = shuffle(Object.keys(STATES).filter(f => f !== '02' && f !== '15'));
+    mode6TotalCorrect = 0;
+    mode6TotalBorders = 0;
+    mode6Selected     = new Set();
   } else {
     stateQueue = shuffle(Object.keys(STATES));
   }
@@ -1050,6 +1181,10 @@ function startGame(mode) {
   mc.classList.toggle('mode1', mode === 1);
   mc.classList.toggle('mode3', mode === 3);
   mc.classList.toggle('mode4', mode === 4);
+
+  // Mode 6 swaps the map for the silhouette+chip UI
+  document.getElementById('map-container').style.display = (mode === 6) ? 'none' : '';
+  document.getElementById('mode6-area').style.display    = (mode === 6) ? 'flex' : 'none';
 
   // Layer visibility
   if (mode === 3) showFeatureLayer();  else hideFeatureLayer();
@@ -1107,7 +1242,7 @@ function loadQuestion() {
     document.getElementById('game-prompt').textContent      = `Find: ${park.name}`;
     document.getElementById('game-instruction').textContent = 'Click the correct park pin on the map';
 
-  } else { // mode 5
+  } else if (currentMode === 5) {
     const fips = stateQueue[currentIndex];
     const stateName = STATES[fips];
     document.getElementById('game-prompt').textContent      = `Capital of: ${stateName}`;
@@ -1120,6 +1255,17 @@ function loadQuestion() {
     setTimeout(() => inp.focus(), 40);
     svg.selectAll(`.state-path[data-fips="${fips}"]`).classed('target', true);
     showCapitalStar(fips);
+
+  } else if (currentMode === 6) {
+    const fips6 = stateQueue[currentIndex];
+    const stateName6 = STATES[fips6];
+    const borderCount = BORDERS[fips6].length;
+    document.getElementById('game-prompt').textContent      = `Borders of: ${stateName6}`;
+    document.getElementById('game-instruction').textContent =
+      `This state has ${borderCount} bordering state${borderCount !== 1 ? 's' : ''} — select them all`;
+    renderSilhouette(fips6);
+    buildChipGrid(fips6);
+    document.getElementById('mode6-submit').disabled = false;
   }
 }
 
@@ -1261,7 +1407,198 @@ function handleParkClick(clickedId) {
   updateHeader(true);
 }
 
-function advance() { currentIndex++; loadQuestion(); }
+/* ── Mode 6 ── */
+function renderSilhouette(fips) {
+  const svgSel = d3.select('#silhouette-svg');
+  svgSel.selectAll('*').remove();
+  if (!usAtlas) return;
+
+  const features = topojson.feature(usAtlas, usAtlas.objects.states).features;
+  const stateFeature = features.find(f => f.id.toString().padStart(2,'0') === fips);
+  if (!stateFeature) return;
+
+  const W = 360, H = 220;
+  svgSel.attr('viewBox', `0 0 ${W} ${H}`);
+
+  const proj = d3.geoMercator().fitExtent([[20, 15], [W - 20, H - 15]], stateFeature);
+  const path = d3.geoPath().projection(proj);
+
+  svgSel.append('path')
+    .datum(stateFeature)
+    .attr('d', path)
+    .attr('fill', '#4299e1')
+    .attr('stroke', 'white')
+    .attr('stroke-width', 2);
+
+  document.querySelector('.silhouette-label').textContent = 'Recognize the state from its shape';
+}
+
+function renderBorderMap(fips, correctBorders, selectedSnap) {
+  const svgSel = d3.select('#silhouette-svg');
+  svgSel.selectAll('*').remove();
+  if (!usAtlas) return;
+
+  const allFeatures = topojson.feature(usAtlas, usAtlas.objects.states).features;
+
+  // Wrong selections: picked but not a real border
+  const wrongSet = new Set([...selectedSnap].filter(f => !correctBorders.has(f)));
+
+  // Context ring: neighbors-of-neighbors for geographic anchoring
+  const contextSet = new Set();
+  [...correctBorders].forEach(nbFips => {
+    (BORDERS[nbFips] || []).forEach(f => {
+      if (f !== fips && !correctBorders.has(f)) contextSet.add(f);
+    });
+  });
+  // Ensure wrong picks also appear if they're in range
+  wrongSet.forEach(f => contextSet.add(f));
+
+  // Bounding box is fitted to target + actual border states only
+  const coreSet      = new Set([fips, ...correctBorders]);
+  const coreFeatures = allFeatures.filter(f => coreSet.has(f.id.toString().padStart(2,'0')));
+
+  const W = 360, H = 220;
+  svgSel.attr('viewBox', `0 0 ${W} ${H}`);
+
+  const proj = d3.geoMercator()
+    .fitExtent([[20, 15], [W - 20, H - 15]], { type: 'FeatureCollection', features: coreFeatures });
+  const path = d3.geoPath().projection(proj);
+
+  // Layer 1: context ring — light gray background states
+  allFeatures
+    .filter(f => {
+      const fp = f.id.toString().padStart(2,'0');
+      return contextSet.has(fp) && !coreSet.has(fp);
+    })
+    .forEach(f => {
+      svgSel.append('path').datum(f).attr('d', path)
+        .attr('fill', '#e2e8f0').attr('stroke', 'white').attr('stroke-width', 1.5);
+    });
+
+  // Layer 2: actual border states — green if you got it, orange if you missed it
+  allFeatures
+    .filter(f => correctBorders.has(f.id.toString().padStart(2,'0')))
+    .forEach(f => {
+      const fp = f.id.toString().padStart(2,'0');
+      svgSel.append('path').datum(f).attr('d', path)
+        .attr('fill', selectedSnap.has(fp) ? '#48bb78' : '#f6ad55')
+        .attr('stroke', 'white').attr('stroke-width', 1.5);
+    });
+
+  // Layer 3: wrong selections — red, drawn wherever they geographically fall
+  allFeatures
+    .filter(f => wrongSet.has(f.id.toString().padStart(2,'0')))
+    .forEach(f => {
+      svgSel.append('path').datum(f).attr('d', path)
+        .attr('fill', '#fc8181').attr('stroke', 'white').attr('stroke-width', 1.5);
+    });
+
+  // Layer 4: the quiz state itself — blue on top
+  const targetFeature = allFeatures.find(f => f.id.toString().padStart(2,'0') === fips);
+  if (targetFeature) {
+    svgSel.append('path').datum(targetFeature).attr('d', path)
+      .attr('fill', '#4299e1').attr('stroke', 'white').attr('stroke-width', 2);
+  }
+
+  document.querySelector('.silhouette-label').textContent =
+    '🔵 Quiz state  🟢 Correct  🟠 Missed  🔴 Wrong click';
+}
+
+function buildChipGrid(currentFips) {
+  const grid = document.getElementById('chip-grid');
+  grid.innerHTML = '';
+  mode6Selected = new Set();
+  updateChipCounter();
+
+  const candidates = Object.keys(STATES)
+    .filter(f => f !== '02' && f !== '15' && f !== currentFips)
+    .sort((a, b) => STATES[a].localeCompare(STATES[b]));
+
+  candidates.forEach(f => {
+    const chip = document.createElement('div');
+    chip.className = 'state-chip';
+    chip.dataset.fips = f;
+    chip.textContent = STATES[f];
+    chip.addEventListener('click', () => {
+      if (answered) return;
+      if (mode6Selected.has(f)) {
+        mode6Selected.delete(f);
+        chip.classList.remove('chip-selected');
+      } else {
+        mode6Selected.add(f);
+        chip.classList.add('chip-selected');
+      }
+      updateChipCounter();
+    });
+    grid.appendChild(chip);
+  });
+}
+
+function updateChipCounter() {
+  const n = mode6Selected.size;
+  document.getElementById('chip-counter').textContent =
+    n === 0 ? '0 selected' : `${n} state${n !== 1 ? 's' : ''} selected`;
+}
+
+function submitMode6() {
+  if (answered) return;
+  answered = true;
+
+  const fips = stateQueue[currentIndex];
+  const correctBorders = new Set(BORDERS[fips]);
+  const total  = correctBorders.size;
+  let   correct = 0;
+
+  document.querySelectorAll('#chip-grid .state-chip').forEach(chip => {
+    const f = chip.dataset.fips;
+    const wasSelected = mode6Selected.has(f);
+    const isCorrect   = correctBorders.has(f);
+    chip.classList.add('chip-submitted');
+
+    if (wasSelected && isCorrect) {
+      chip.classList.remove('chip-selected');
+      chip.classList.add('chip-correct');
+      correct++;
+    } else if (wasSelected && !isCorrect) {
+      chip.classList.remove('chip-selected');
+      chip.classList.add('chip-incorrect');
+    } else if (!wasSelected && isCorrect) {
+      chip.classList.add('chip-missed');
+    }
+  });
+
+  mode6TotalCorrect += correct;
+  mode6TotalBorders += total;
+  document.getElementById('mode6-submit').disabled = true;
+
+  // Show the border context map — silhouette becomes a color-coded mini-map
+  renderBorderMap(fips, correctBorders, new Set(mode6Selected));
+
+  const allCorrect = (correct === total && mode6Selected.size === total);
+  if (allCorrect) {
+    score++;
+    recordResult(true);
+    showFeedback(getCorrectMessage(), true);
+  } else {
+    recordResult(false, STATES[fips]);
+    const missed = total - correct;
+    showFeedback(
+      `${correct} / ${total} borders correct — ${missed} missed state${missed !== 1 ? 's' : ''} shown in orange`,
+      false
+    );
+  }
+  updateHeader(true);
+
+  // Let the user review the border map, then click anywhere to advance
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
+}
+
+function advance() {
+  document.removeEventListener('click', advance); // clean up any pending mode-6 listener
+  currentIndex++;
+  loadQuestion();
+}
 
 /* ══════════════════════════════════════════════════
    STREAK & GAMIFICATION
@@ -1311,16 +1648,20 @@ function showToast(milestone) {
 ══════════════════════════════════════════════════ */
 function showComplete() {
   const total = stateQueue.length;
-  const pct   = Math.round((score / total) * 100);
+  // Mode 6 uses border-correct/total rather than questions-correct/total
+  const ringNum   = (currentMode === 6) ? mode6TotalCorrect : score;
+  const ringDenom = (currentMode === 6) ? mode6TotalBorders : total;
+  const pct       = ringDenom > 0 ? Math.round((ringNum / ringDenom) * 100) : 0;
   const trophy = pct === 100 ? '🏆' : pct >= 80 ? '🥇' : pct >= 60 ? '🥈' : '🥉';
 
   document.getElementById('summary-trophy').textContent  = trophy;
   document.getElementById('summary-heading').textContent = 'Quiz Complete!';
-  document.getElementById('ring-number').textContent     = score;
-  document.getElementById('ring-label').textContent      = `/ ${total} correct`;
+  document.getElementById('ring-number').textContent     = ringNum;
+  document.getElementById('ring-label').textContent      = (currentMode === 6)
+    ? `/ ${ringDenom} borders` : `/ ${ringDenom} correct`;
 
   // Score ring fill
-  const deg    = Math.round((score / total) * 360);
+  const deg    = Math.round((ringNum / ringDenom) * 360);
   const colour = pct === 100 ? '#48bb78' : pct >= 60 ? '#4299e1' : '#f6ad55';
   const rf = document.getElementById('ring-fill');
   rf.style.background   = `conic-gradient(${colour} ${deg}deg, transparent ${deg}deg)`;
@@ -1355,6 +1696,7 @@ function showComplete() {
   const label = currentMode === 3 ? 'Missed Features'
               : currentMode === 4 ? 'Missed Parks'
               : currentMode === 5 ? 'Missed Capitals'
+              : currentMode === 6 ? 'States With Missed Borders'
               : 'Missed States';
   document.getElementById('wrong-heading').textContent =
     wrongItems.length > 0 ? `${label} (${wrongItems.length})` : label;
@@ -1392,7 +1734,10 @@ function resetMapClasses() {
 function updateHeader(justAnswered = false) {
   const done  = justAnswered ? currentIndex + 1 : currentIndex;
   const total = stateQueue.length;
-  document.getElementById('header-score').textContent  = `Score: ${score} / ${done}`;
+  const scoreText = (currentMode === 6)
+    ? `Borders: ${mode6TotalCorrect} / ${mode6TotalBorders}`
+    : `Score: ${score} / ${done}`;
+  document.getElementById('header-score').textContent  = scoreText;
   document.getElementById('progress-text').textContent = `${done} / ${total}`;
   document.getElementById('progress-bar').style.width  = `${(done / total) * 100}%`;
 }
