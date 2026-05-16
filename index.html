@@ -229,12 +229,10 @@
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .feature-mountain {
-      fill: none;
-      stroke: #744210;
-      stroke-width: 3.5;
-      stroke-dasharray: 8 4;
-      stroke-linecap: round;
+    .mountain-triangle {
+      fill: #744210;
+      pointer-events: none;
+      transition: fill 0.15s;
     }
     /* mountain range that's a polygon (Black Hills) */
     .feature-mountain-poly {
@@ -248,6 +246,23 @@
       fill-opacity: 0.55;
       stroke: #2c5282;
       stroke-width: 1;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .feature-island {
+      fill: none;
+      stroke: #744210;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 2 7;
+      cursor: pointer;
+      pointer-events: stroke;
+    }
+    .feature-desert {
+      fill: rgba(210,170,60,0.28);
+      stroke: #b7791f;
+      stroke-width: 1.5;
+      stroke-dasharray: 5 3;
       cursor: pointer;
       pointer-events: auto;
     }
@@ -271,25 +286,33 @@
 
     /* Hover highlights */
     .feature-path.fhover.feature-river    { stroke: #63b3ed; stroke-width: 3.5; }
-    .feature-path.fhover.feature-mountain { stroke: #d69e2e; stroke-width: 4.5; }
+    .feature-path.fhover .mountain-triangle { fill: #d69e2e; }
     .feature-path.fhover.feature-lake     { fill-opacity: 0.8; }
     .feature-path.fhover.feature-mountain-poly { fill: rgba(214,158,46,0.25); stroke: #d69e2e; }
+    .feature-path.fhover.feature-desert   { fill: rgba(210,170,60,0.5); stroke: #975a16; }
+    .feature-path.fhover.feature-island   { stroke: #d69e2e; }
 
     /* Correct / incorrect / revealed */
     .feature-path.fcorrect.feature-river    { stroke: #38a169; stroke-width: 4; }
-    .feature-path.fcorrect.feature-mountain { stroke: #38a169; stroke-width: 5; }
+    .feature-path.fcorrect .mountain-triangle { fill: #38a169; }
     .feature-path.fcorrect.feature-lake     { fill: #38a169; fill-opacity: 0.75; stroke: #276749; }
     .feature-path.fcorrect.feature-mountain-poly { fill: rgba(56,161,105,0.35); stroke: #38a169; }
+    .feature-path.fcorrect.feature-desert   { fill: rgba(56,161,105,0.35); stroke: #38a169; stroke-dasharray: 5 3; }
+    .feature-path.fcorrect.feature-island   { stroke: #38a169; }
 
     .feature-path.fincorrect.feature-river    { stroke: #e53e3e; stroke-width: 4; }
-    .feature-path.fincorrect.feature-mountain { stroke: #e53e3e; stroke-width: 5; }
+    .feature-path.fincorrect .mountain-triangle { fill: #e53e3e; }
     .feature-path.fincorrect.feature-lake     { fill: #e53e3e; fill-opacity: 0.75; stroke: #9b2c2c; }
     .feature-path.fincorrect.feature-mountain-poly { fill: rgba(229,62,62,0.35); stroke: #e53e3e; }
+    .feature-path.fincorrect.feature-desert   { fill: rgba(229,62,62,0.35); stroke: #e53e3e; stroke-dasharray: 5 3; }
+    .feature-path.fincorrect.feature-island   { stroke: #e53e3e; }
 
     .feature-path.frevealed.feature-river    { stroke: #4299e1; stroke-width: 4; }
-    .feature-path.frevealed.feature-mountain { stroke: #4299e1; stroke-width: 5; }
+    .feature-path.frevealed .mountain-triangle { fill: #4299e1; }
     .feature-path.frevealed.feature-lake     { fill: #4299e1; fill-opacity: 0.75; stroke: #2b6cb0; }
     .feature-path.frevealed.feature-mountain-poly { fill: rgba(66,153,225,0.35); stroke: #4299e1; }
+    .feature-path.frevealed.feature-desert   { fill: rgba(66,153,225,0.35); stroke: #4299e1; stroke-dasharray: 5 3; }
+    .feature-path.frevealed.feature-island   { stroke: #4299e1; }
 
     /* Loading overlay */
     #map-loading {
@@ -313,8 +336,12 @@
     .leg-item { display: flex; align-items: center; gap: 0.4rem; }
     .leg-swatch { display: inline-block; border-radius: 2px; flex-shrink: 0; }
     .leg-river    { width: 24px; height: 3px; background: #3182ce; }
-    .leg-mountain { width: 24px; height: 3px; background: #744210; border-top: 3px dashed #744210; }
+    .leg-mountain { width: 0; height: 0; background: transparent; border-radius: 0;
+      border-left: 8px solid transparent; border-right: 8px solid transparent;
+      border-bottom: 14px solid #744210; }
     .leg-lake     { width: 14px; height: 14px; background: rgba(49,130,206,0.55); border: 1px solid #2c5282; border-radius: 2px; }
+    .leg-desert   { width: 14px; height: 14px; background: rgba(210,170,60,0.28); border: 1.5px dashed #b7791f; border-radius: 2px; }
+    .leg-island   { width: 24px; height: 3px; background: repeating-linear-gradient(to right, #744210 0 2px, transparent 2px 9px); border-radius: 2px; }
 
     /* Mode 2 input */
     #mode2-area { display: none; align-items: flex-start; gap: 0.75rem; position: relative; }
@@ -456,6 +483,11 @@
       <h2>State Capitals</h2>
       <p>A state is highlighted and its capital is marked on the map. Type the capital city name.</p>
     </div>
+    <div class="mode-card" onclick="startGame(6)">
+      <span class="card-icon">🧩</span>
+      <h2>Border States</h2>
+      <p>A state silhouette is shown — select all the states that share a border with it.</p>
+    </div>
     <div class="mode-card" onclick="startGame(3)">
       <span class="card-icon">🏔️</span>
       <h2>Find the Feature</h2>
@@ -465,11 +497,6 @@
       <span class="card-icon">🏕️</span>
       <h2>Find the National Park</h2>
       <p>US national parks are pinned on the map. Click the park that matches the name shown.</p>
-    </div>
-    <div class="mode-card" onclick="startGame(6)">
-      <span class="card-icon">🧩</span>
-      <h2>Border States</h2>
-      <p>A state silhouette is shown — select all the states that share a border with it.</p>
     </div>
   </div>
 </div>
@@ -505,6 +532,8 @@
     <span class="leg-item"><span class="leg-swatch leg-river"></span> River</span>
     <span class="leg-item"><span class="leg-swatch leg-mountain"></span> Mountain Range</span>
     <span class="leg-item"><span class="leg-swatch leg-lake"></span> Lake / Water Body</span>
+    <span class="leg-item"><span class="leg-swatch leg-desert"></span> Desert</span>
+    <span class="leg-item"><span class="leg-swatch leg-island"></span> Island Chain</span>
   </div>
 
   <div id="mode2-area">
@@ -605,7 +634,7 @@ const FEATURES = [
     ]}},
   { id:'sierra-nevada', name:'Sierra Nevada', type:'mountain',
     geometry:{ type:'LineString', coordinates:[
-      [-120.5,39.5],[-119.8,38.2],[-118.8,37.0],[-118.3,36.3]
+      [-120.5,39.5],[-119.65,39.25],[-119.6,38.7],[-118.8,37.0],[-118.3,36.3]
     ]}},
   { id:'cascade-range', name:'Cascade Range', type:'mountain',
     geometry:{ type:'LineString', coordinates:[
@@ -622,10 +651,9 @@ const FEATURES = [
       [-78.5,38.8],[-80.0,37.0],[-81.5,36.0],[-83.0,35.5],[-84.2,34.8]
     ]}},
   { id:'black-hills', name:'Black Hills', type:'mountain',
-    geometry:{ type:'Polygon', coordinates:[[
-      [-104.2,44.8],[-103.5,44.8],[-103.0,44.2],[-103.2,43.7],
-      [-104.0,43.7],[-104.5,44.2],[-104.2,44.8]
-    ]]}},
+    geometry:{ type:'LineString', coordinates:[
+      [-103.8,44.7],[-103.6,44.2],[-103.7,43.9],[-103.9,43.6]
+    ]}},
 
   // ── RIVERS ──
   { id:'mississippi-river', name:'Mississippi River', type:'river',
@@ -718,6 +746,98 @@ const FEATURES = [
     geometry:{ type:'Polygon', coordinates:[[
       [-76.6,39.4],[-76.1,38.8],[-76.2,38.0],[-76.0,37.2],
       [-76.5,37.0],[-76.7,37.8],[-76.5,38.5],[-76.7,39.0],[-76.6,39.4]
+    ]]}},
+
+  // ── ADDITIONAL LAKES ──
+  { id:'lake-tahoe', name:'Lake Tahoe', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-120.2,39.17],[-120.0,39.23],[-119.92,39.12],[-119.95,38.93],
+      [-120.1,38.85],[-120.22,38.95],[-120.2,39.17]
+    ]]}},
+  { id:'lake-okeechobee', name:'Lake Okeechobee', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-80.9,27.18],[-80.55,27.2],[-80.32,26.92],[-80.5,26.58],
+      [-80.82,26.62],[-81.1,26.85],[-80.9,27.18]
+    ]]}},
+  { id:'flathead-lake', name:'Flathead Lake', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-114.35,48.05],[-113.98,48.0],[-113.82,47.78],[-113.95,47.54],
+      [-114.22,47.55],[-114.4,47.75],[-114.35,48.05]
+    ]]}},
+  { id:'salton-sea', name:'Salton Sea', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-115.85,33.52],[-115.5,33.5],[-115.45,33.2],[-115.6,32.92],
+      [-116.0,33.05],[-116.02,33.35],[-115.85,33.52]
+    ]]}},
+  { id:'puget-sound', name:'Puget Sound', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-122.7,47.85],[-122.45,47.75],[-122.3,47.5],[-122.38,47.2],
+      [-122.6,47.05],[-122.82,47.3],[-123.0,47.6],[-122.7,47.85]
+    ]]}},
+  { id:'san-francisco-bay', name:'San Francisco Bay', type:'lake',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-122.52,37.85],[-122.22,37.82],[-122.02,37.65],[-122.05,37.45],
+      [-122.28,37.42],[-122.48,37.55],[-122.52,37.85]
+    ]]}},
+
+  // ── ADDITIONAL MOUNTAIN RANGES ──
+  { id:'adirondacks', name:'Adirondack Mountains', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-74.6,44.75],[-74.2,44.3],[-73.9,44.0],[-73.7,43.75]
+    ]}},
+  { id:'ozark-mountains', name:'Ozark Mountains', type:'mountain',
+    geometry:{ type:'LineString', coordinates:[
+      [-94.5,37.0],[-93.2,36.7],[-92.0,36.6],[-91.2,36.2],[-90.5,35.7]
+    ]}},
+
+  // ── ADDITIONAL RIVERS ──
+  { id:'yukon-river', name:'Yukon River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-141.0,64.5],[-147.5,64.2],[-152.0,63.2],[-155.5,62.0],
+      [-160.0,62.5],[-163.5,63.0],[-165.0,63.5]
+    ]}},
+  { id:'hudson-river', name:'Hudson River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-74.2,43.5],[-73.9,42.5],[-73.95,41.7],[-74.05,41.0],[-74.0,40.7]
+    ]}},
+  { id:'potomac-river', name:'Potomac River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-79.4,38.85],[-78.5,38.55],[-77.5,38.7],[-77.1,38.72],
+      [-76.7,38.55],[-76.5,38.35]
+    ]}},
+  { id:'yellowstone-river', name:'Yellowstone River', type:'river',
+    geometry:{ type:'LineString', coordinates:[
+      [-110.6,44.55],[-110.1,45.5],[-108.7,45.5],[-107.2,46.1],
+      [-106.0,46.4],[-104.5,46.7],[-104.0,47.4]
+    ]}},
+
+  // ── FLORIDA KEYS ──
+  { id:'florida-keys', name:'Florida Keys', type:'island',
+    geometry:{ type:'LineString', coordinates:[
+      [-80.35,25.52],[-80.6,25.35],[-81.0,25.12],[-81.4,24.92],
+      [-81.8,24.72],[-82.2,24.52]
+    ]}},
+
+  // ── DESERTS ──
+  { id:'mojave-desert', name:'Mojave Desert', type:'desert',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-117.5,35.8],[-116.0,37.0],[-114.2,37.0],[-114.0,35.2],
+      [-115.0,34.0],[-117.2,34.5],[-117.5,35.8]
+    ]]}},
+  { id:'sonoran-desert', name:'Sonoran Desert', type:'desert',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-117.0,33.6],[-114.2,34.0],[-113.0,33.2],[-111.5,32.2],
+      [-110.5,31.5],[-111.8,31.3],[-114.5,32.6],[-117.0,33.6]
+    ]]}},
+  { id:'chihuahuan-desert', name:'Chihuahuan Desert', type:'desert',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-108.5,32.7],[-106.5,32.6],[-104.5,30.2],[-103.0,29.5],
+      [-104.2,31.0],[-106.2,31.6],[-108.2,31.7],[-108.5,32.7]
+    ]]}},
+  { id:'great-basin-desert', name:'Great Basin Desert', type:'desert',
+    geometry:{ type:'Polygon', coordinates:[[
+      [-119.5,42.0],[-116.5,42.0],[-114.0,42.0],[-113.0,41.0],
+      [-113.5,39.0],[-115.5,37.2],[-117.5,37.8],[-119.0,38.8],[-119.5,42.0]
     ]]}}
 ];
 
@@ -1009,23 +1129,32 @@ function fips(d) { return d.id.toString().padStart(2,'0'); }
 ══════════════════════════════════════════════════ */
 function initFeatures() {
   FEATURES.forEach(feature => {
-    const isMtnPoly = feature.type === 'mountain' && feature.geometry.type === 'Polygon';
-    const visClass  = isMtnPoly ? 'feature-path feature-mountain-poly'
-                                : `feature-path feature-${feature.type}`;
+    const isMtnPoly  = feature.type === 'mountain' && feature.geometry.type === 'Polygon';
+    const isMtnLine  = feature.type === 'mountain' && feature.geometry.type === 'LineString';
 
     const g = featuresGroup.append('g')
       .attr('class', 'feature-group')
       .attr('data-fid', feature.id);
 
-    // Visible path
-    g.append('path')
-      .datum(feature.geometry)
-      .attr('d', geoPath)
-      .attr('class', visClass)
-      .attr('id', `fp-${feature.id}`);
+    if (isMtnLine) {
+      // Mountain ranges: row of triangle peaks instead of a dashed line
+      const triGroup = g.append('g')
+        .attr('class', 'feature-path feature-mountain')
+        .attr('id', `fp-${feature.id}`);
+      placeMountainTriangles(triGroup, feature.geometry.coordinates);
+    } else {
+      // Rivers, lakes, mountain polygons — rendered as paths
+      const visClass = isMtnPoly ? 'feature-path feature-mountain-poly'
+                                 : `feature-path feature-${feature.type}`;
+      g.append('path')
+        .datum(feature.geometry)
+        .attr('d', geoPath)
+        .attr('class', visClass)
+        .attr('id', `fp-${feature.id}`);
+    }
 
     // Hit area — wider transparent overlay for easy clicking
-    const hitClass = (isMtnPoly || feature.type === 'lake') ? 'feature-hit-poly' : 'feature-hit';
+    const hitClass = (isMtnPoly || feature.type === 'lake' || feature.type === 'desert') ? 'feature-hit-poly' : 'feature-hit';
     g.append('path')
       .datum(feature.geometry)
       .attr('d', geoPath)
@@ -1041,6 +1170,44 @@ function initFeatures() {
       d3.select(`#fp-${feature.id}`).classed('fhover', false);
     });
   });
+}
+
+// Place evenly-spaced upward-pointing triangles along a projected coordinate path
+function placeMountainTriangles(group, coords, spacing = 20, minCount = 4) {
+  const TRIANGLE = 'M0,-6 L5,3 L-5,3 Z'; // upward triangle, height 9, base 10
+
+  const pts = coords.map(c => projection(c)).filter(p => p !== null);
+  if (pts.length < 2) return;
+
+  // Calculate total projected path length
+  let totalLen = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    totalLen += Math.hypot(pts[i+1][0] - pts[i][0], pts[i+1][1] - pts[i][1]);
+  }
+
+  // Shrink spacing for short paths so at least minCount triangles always appear
+  const effectiveSpacing = Math.min(spacing, totalLen / minCount);
+
+  let distSoFar = 0;
+  let nextAt    = effectiveSpacing / 2;
+
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[i + 1];
+    const segLen   = Math.hypot(x2 - x1, y2 - y1);
+
+    while (distSoFar + segLen >= nextAt) {
+      const t = (nextAt - distSoFar) / segLen;
+      const x = x1 + t * (x2 - x1);
+      const y = y1 + t * (y2 - y1);
+      group.append('path')
+        .attr('class', 'mountain-triangle')
+        .attr('d', TRIANGLE)
+        .attr('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+      nextAt += effectiveSpacing;
+    }
+    distSoFar += segLen;
+  }
 }
 
 function showFeatureLayer() { if (featuresGroup) featuresGroup.style('display', null); }
