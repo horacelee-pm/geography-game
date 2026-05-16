@@ -1391,7 +1391,6 @@ function handleParkClick(clickedId) {
     correctPin.raise();
     recordResult(true);
     showFeedback(getCorrectMessage(), true);
-    setTimeout(advance, 1200);
   } else {
     parksGroup.select(`.park-pin[data-pid="${clickedId}"]`).classed('pk-incorrect', true);
     const revealedPin = parksGroup.select(`.park-pin[data-pid="${targetId}"]`).classed('pk-revealed', true);
@@ -1402,9 +1401,10 @@ function handleParkClick(clickedId) {
     revealedPin.raise();
     recordResult(false, targetPark.name);
     showFeedback(`✗ That was ${clickedName}. Correct park shown in blue.`, false);
-    setTimeout(advance, 2600);
   }
   updateHeader(true);
+  document.getElementById('game-instruction').textContent = 'Click anywhere to continue →';
+  setTimeout(() => document.addEventListener('click', advance, { once: true }), 250);
 }
 
 /* ── Mode 6 ── */
