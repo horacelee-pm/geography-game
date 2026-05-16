@@ -153,10 +153,12 @@
     .state-chip {
       padding: 0.5rem 0.85rem; border-radius: 20px; font-size: 0.84rem; font-weight: 600;
       cursor: pointer; border: 2px solid #e2e8f0; background: #f7fafc; color: #4a5568;
-      transition: all 0.15s; user-select: none;
+      transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+      user-select: none; outline: none;
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
       min-height: 44px; display: inline-flex; align-items: center;
     }
+    .state-chip:focus { outline: none; }
     @media (hover: hover) {
       .state-chip:hover:not(.chip-submitted) { border-color: #90cdf4; background: #ebf8ff; color: #2b6cb0; }
     }
@@ -1529,7 +1531,7 @@ function buildChipGrid(currentFips) {
     chip.className = 'state-chip';
     chip.dataset.fips = f;
     chip.textContent = STATES[f];
-    chip.addEventListener('click', () => {
+    const toggleChip = () => {
       if (answered) return;
       if (mode6Selected.has(f)) {
         mode6Selected.delete(f);
@@ -1539,7 +1541,17 @@ function buildChipGrid(currentFips) {
         chip.classList.add('chip-selected');
       }
       updateChipCounter();
-    });
+    };
+    // touchend: fires immediately on finger-lift, preventDefault stops iOS sticky hover + ghost click
+    chip.addEventListener('touchstart', () => { chip._touchMoved = false; }, { passive: true });
+    chip.addEventListener('touchmove',  () => { chip._touchMoved = true;  }, { passive: true });
+    chip.addEventListener('touchend', e => {
+      if (chip._touchMoved) return; // user was scrolling, not tapping
+      e.preventDefault();
+      toggleChip();
+    }, { passive: false });
+    // click: mouse fallback (won't fire on touch because preventDefault above suppresses it)
+    chip.addEventListener('click', toggleChip);
     grid.appendChild(chip);
   });
 }
