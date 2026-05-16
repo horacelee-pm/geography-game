@@ -151,12 +151,15 @@
     #chip-counter { font-size: 0.88rem; font-weight: 700; color: #4299e1; white-space: nowrap; }
     #chip-grid { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: flex-start; }
     .state-chip {
-      padding: 0.32rem 0.72rem; border-radius: 20px; font-size: 0.84rem; font-weight: 600;
+      padding: 0.5rem 0.85rem; border-radius: 20px; font-size: 0.84rem; font-weight: 600;
       cursor: pointer; border: 2px solid #e2e8f0; background: #f7fafc; color: #4a5568;
       transition: all 0.15s; user-select: none;
       touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      min-height: 44px; display: inline-flex; align-items: center;
     }
-    .state-chip:hover:not(.chip-submitted) { border-color: #90cdf4; background: #ebf8ff; color: #2b6cb0; }
+    @media (hover: hover) {
+      .state-chip:hover:not(.chip-submitted) { border-color: #90cdf4; background: #ebf8ff; color: #2b6cb0; }
+    }
     .state-chip.chip-selected  { border-color: #4299e1; background: #4299e1; color: white; }
     .state-chip.chip-correct   { border-color: #38a169; background: #48bb78; color: white; cursor: default; }
     .state-chip.chip-incorrect { border-color: #e53e3e; background: #fc8181; color: white; cursor: default; }
@@ -1526,8 +1529,7 @@ function buildChipGrid(currentFips) {
     chip.className = 'state-chip';
     chip.dataset.fips = f;
     chip.textContent = STATES[f];
-    chip.addEventListener('pointerdown', e => {
-      e.preventDefault(); // prevent subsequent click/touch events firing too
+    chip.addEventListener('click', () => {
       if (answered) return;
       if (mode6Selected.has(f)) {
         mode6Selected.delete(f);
