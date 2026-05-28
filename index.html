@@ -369,15 +369,36 @@
     }
     .submit-btn:hover { background: #3182ce; }
 
-    /* Feedback */
+    /* Feedback — floats inside map at top center */
     #feedback {
-      padding: 0.65rem 1.6rem; border-radius: 10px;
-      font-weight: 600; font-size: 0.98rem; min-height: 2.4rem;
-      display: flex; align-items: center; justify-content: center; visibility: hidden;
+      position: absolute;
+      top: 0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 0.6rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      max-width: 88%;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+      pointer-events: none;
+      display: none;
     }
-    #feedback.show        { visibility: visible; }
+    #feedback.show        { display: block; }
     #feedback.fb-correct  { background: #c6f6d5; color: #22543d; }
     #feedback.fb-incorrect{ background: #fed7d7; color: #822727; }
+
+    /* Mode 6 feedback — inline below the buttons */
+    #feedback-m6 {
+      padding: 0.6rem 1.5rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.95rem; text-align: center;
+      display: none; margin-top: 0.85rem;
+    }
+    #feedback-m6.show        { display: block; }
+    #feedback-m6.fb-correct  { background: #c6f6d5; color: #22543d; }
+    #feedback-m6.fb-incorrect{ background: #fed7d7; color: #822727; }
 
     /* ───── STREAK TOAST ───── */
     #streak-toast {
@@ -520,6 +541,7 @@
 
   <div id="map-container">
     <div id="map-loading"><div class="spinner"></div> Loading map…</div>
+    <div id="feedback"></div>
   </div>
 
   <!-- Footnote shown only in mode 4 -->
@@ -560,10 +582,10 @@
         <button id="mode6-clear"  onclick="clearChips()">Clear</button>
         <button id="mode6-submit" onclick="submitMode6()">Submit</button>
       </div>
+      <div id="feedback-m6"></div>
     </div>
   </div>
 
-  <div id="feedback"></div>
 </div>
 
 <!-- ═══════════ COMPLETE SCREEN ═══════════ -->
@@ -1927,13 +1949,16 @@ function showComplete() {
    UI HELPERS
 ══════════════════════════════════════════════════ */
 function showFeedback(msg, correct) {
-  const el = document.getElementById('feedback');
+  const id = currentMode === 6 ? 'feedback-m6' : 'feedback';
+  const el = document.getElementById(id);
   el.textContent = msg;
   el.className   = `show ${correct ? 'fb-correct' : 'fb-incorrect'}`;
 }
 function hideFeedback() {
-  const el = document.getElementById('feedback');
-  el.className = ''; el.textContent = '';
+  ['feedback', 'feedback-m6'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className = ''; el.textContent = ''; }
+  });
 }
 function resetMapClasses() {
   if (!svg) return;
